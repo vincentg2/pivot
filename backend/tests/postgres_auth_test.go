@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -23,7 +24,7 @@ func TestInvitationRegistrationAgainstPostgres(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
-	code := "PIVOT-INTEGRATION-" + uuid.NewString()
+	code := strings.ToUpper("PIVOT-INTEGRATION-" + uuid.NewString())
 	hash := sha256.Sum256([]byte(code))
 	inviteID := uuid.New()
 	_, err = pool.Exec(ctx, `INSERT INTO invitations(id,code_hash,label,max_uses) VALUES($1,$2,'integration',1)`, inviteID, hash[:])
