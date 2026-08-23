@@ -1,0 +1,46 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env: {POSTGRES_DB: pivot_test, POSTGRES_USER: pivot, POSTGRES_PASSWORD: pivot}
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U pivot -d pivot_test"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://pivot:pivot@localhost:5432/pivot_test?sslmode=disable
+    defaults: {run: {working-directory: backend}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version-file: backend/go.mod, cache-dependency-path: backend/go.sum}
+      - run: go mod download
+      - run: go run github.com/pressly/goose/v3/cmd/goose@v3.24.1 -dir migrations postgres "$TEST_DATABASE_URL" up
+      - run: test -z "$(gofmt -l .)"
+      - run: go vet ./...
+      - run: go test -race ./...
+      - run: go build ./...
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: {version: 10}
+      - uses: actions/setup-node@v4
+        with: {node-version: 20, cache: pnpm, cache-dependency-path: pnpm-lock.yaml}
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @pivot/frontend format:check
+      - run: pnpm --filter @pivot/frontend lint
+      - run: pnpm --filter @pivot/frontend test --run
+      - run: pnpm --filter @pivot/frontend build
+      - run: pnpm --filter @pivot/frontend exec playwright install --with-deps chromium
+      - run: pnpm --filter @pivot/frontend test:e2e

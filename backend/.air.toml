@@ -1,0 +1,13 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o ./tmp/pivot-api ./cmd/api"
+bin = "./tmp/pivot-api"
+include_ext = ["go", "sql"]
+exclude_dir = ["tmp", "tests"]
+delay = 300
+stop_on_error = true
+
+[log]
+time = true
