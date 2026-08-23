@@ -18,13 +18,11 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     headers: { 'Content-Type': 'application/json', ...options.headers },
   })
   if (!response.ok) {
-    const problem = (await response
-      .json()
-      .catch(() => ({
-        type: 'about:blank',
-        title: 'Request failed',
-        status: response.status,
-      }))) as Problem
+    const problem = (await response.json().catch(() => ({
+      type: 'about:blank',
+      title: 'Request failed',
+      status: response.status,
+    }))) as Problem
     throw new ApiError(problem)
   }
   if (response.status === 204) return undefined as T
