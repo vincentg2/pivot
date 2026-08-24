@@ -69,7 +69,7 @@ test('a member adds a club to their favorites', async ({ page }) => {
   await expect(
     page.getByRole('button', { name: 'Remove Paris Saint-Germain from favorites' }),
   ).toBeVisible()
-  await expect(page.getByText('/ 5 favorites')).toContainText('1')
+  await expect(page.getByText('/ 5 favoris')).toContainText('1')
 })
 
 test('a member confirms permanent account deletion', async ({ page }) => {
@@ -84,9 +84,9 @@ test('a member confirms permanent account deletion', async ({ page }) => {
   })
 
   await page.goto('/profile')
-  await page.getByRole('button', { name: 'Delete account' }).click()
-  await expect(page.getByRole('dialog')).toContainText('cannot be undone')
-  await page.getByRole('button', { name: 'Delete permanently' }).click()
+  await page.getByRole('button', { name: 'Supprimer le compte' }).click()
+  await expect(page.getByRole('dialog')).toContainText('définitive et irréversible')
+  await page.getByRole('button', { name: 'Supprimer définitivement' }).click()
   await expect(page).toHaveURL(/\/login$/)
   expect(deleted).toBe(true)
 })

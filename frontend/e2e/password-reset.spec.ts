@@ -76,14 +76,18 @@ test('an administrator issues a one-time link and the member resets their passwo
   })
 
   await page.goto('/admin')
-  await page.getByLabel('Member email').fill('camille@example.test')
-  await page.getByRole('button', { name: 'Generate reset link' }).click()
+  await page.getByLabel('E-mail du membre').fill('camille@example.test')
+  await page.getByRole('button', { name: 'Générer le lien' }).click()
   await expect(page.getByRole('status')).toContainText(`/reset-password?token=${resetToken}`)
 
   await page.goto(`/reset-password?token=${resetToken}`)
-  await page.getByLabel('New password').fill('a-brand-new-safe-password')
-  await page.getByLabel('Confirm password').fill('a-brand-new-safe-password')
-  await page.getByRole('button', { name: 'Update password' }).click()
-  await expect(page.getByRole('heading', { name: 'Password updated' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Return to sign in' })).toBeVisible()
+  await page
+    .getByRole('textbox', { name: 'Nouveau mot de passe', exact: true })
+    .fill('a-brand-new-safe-password')
+  await page
+    .getByRole('textbox', { name: 'Confirmer le mot de passe', exact: true })
+    .fill('a-brand-new-safe-password')
+  await page.getByRole('button', { name: 'Mettre à jour le mot de passe' }).click()
+  await expect(page.getByRole('heading', { name: 'Mot de passe mis à jour' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Retour à la connexion' })).toBeVisible()
 })

@@ -28,7 +28,7 @@ export const useSessionStore = defineStore('session', {
       try {
         this.user = (await api<{ user: User }>('/auth/me')).user
         applyTheme(this.user.theme)
-        applyLocale(this.user.locale)
+        applyLocale(this.user.locale ?? 'fr')
       } catch {
         this.user = null
         applyTheme('system')
@@ -44,7 +44,7 @@ export const useSessionStore = defineStore('session', {
         })
       ).user
       applyTheme(this.user.theme)
-      applyLocale(this.user.locale)
+      applyLocale(this.user.locale ?? 'fr')
     },
     async register(payload: {
       email: string
