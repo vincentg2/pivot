@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import ClubMark from '@/components/ClubMark.vue'
 import type { FootballMatch } from '@/lib/football'
 
-const props = defineProps<{ match: FootballMatch }>()
+const props = defineProps<{ match: FootballMatch; channels?: string[] }>()
 const finished = computed(() => props.match.status === 'FINISHED')
 const time = computed(() =>
   new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(
@@ -37,6 +37,9 @@ const status = computed(() => {
     <div class="match-team away-team">
       <ClubMark :name="match.away.name" :tla="match.away.tla" :crest-url="match.away.crestUrl" />
       <span>{{ match.away.shortName || match.away.name }}</span>
+    </div>
+    <div v-if="channels?.length" class="match-channels" aria-label="TV channels">
+      <span v-for="channel in channels" :key="channel">{{ channel }}</span>
     </div>
   </article>
 </template>

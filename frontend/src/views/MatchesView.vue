@@ -5,8 +5,10 @@ import MatchRow from '@/components/MatchRow.vue'
 import { api } from '@/lib/api'
 import { addDays, localDate, type FootballMatch } from '@/lib/football'
 import type { Competition } from '@/stores/favorites'
+import { listingTime, type BroadcastListing } from '@/lib/broadcast'
 
 const matches = ref<FootballMatch[]>([])
+const broadcasts = ref<BroadcastListing[]>([])
 const competitions = ref<Competition[]>([])
 const from = ref(localDate(new Date()))
 const to = ref(from.value)
@@ -25,12 +27,44 @@ const groupedMatches = computed(() => {
   }
   return [...groups.entries()]
 })
+const channelsByMatch = computed(() => {
+  const map = new Map<string, string[]>()
+  for (const listing of broadcasts.value) {
+    if (!listing.matchId) continue
+    map.set(listing.matchId, [
+      ...new Set([...(map.get(listing.matchId) || []), ...listing.channels]),
+    ])
+  }
+  return map
+})
+const externalByDate = computed(() => {
+  const map = new Map<string, BroadcastListing[]>()
+  if (favoritesOnly.value) return map
+  for (const listing of broadcasts.value.filter((item) => item.external)) {
+    const date = localDate(new Date(listing.startsAt))
+    map.set(date, [...(map.get(date) || []), listing])
+  }
+  return map
+})
+const dates = computed(() =>
+  [
+    ...new Set([...groupedMatches.value.map(([date]) => date), ...externalByDate.value.keys()]),
+  ].sort(),
+)
+const matchesByDate = computed(() => new Map(groupedMatches.value))
 
 async function load() {
   loading.value = true
   const query = new URLSearchParams({ from: from.value, to: to.value })
   if (competition.value) query.set('competition', competition.value)
-  matches.value = (await api<{ matches: FootballMatch[] }>(`/matches?${query}`)).matches
+  const [matchResponse, broadcastResponse] = await Promise.all([
+    api<{ matches: FootballMatch[] }>(`/matches?${query}`),
+    api<{ listings: BroadcastListing[] }>(
+      `/broadcasts?${new URLSearchParams({ from: from.value, to: to.value })}`,
+    ),
+  ])
+  matches.value = matchResponse.matches
+  broadcasts.value = broadcastResponse.listings
   loading.value = false
 }
 function choose(start: Date, days = 0) {
@@ -99,17 +133,32 @@ onMounted(async () => {
       <label class="check-filter"><input v-model="favoritesOnly" type="checkbox" /> My clubs</label>
     </section>
     <p v-if="loading" class="catalog-state">Loading matches…</p>
-    <div v-else-if="groupedMatches.length" class="match-groups">
-      <section v-for="[date, items] in groupedMatches" :key="date">
+    <div v-else-if="dates.length" class="match-groups">
+      <section v-for="date in dates" :key="date">
         <div class="match-date">
           <h2>{{ dateHeading(date) }}</h2>
-          <span>{{ items.length }} matches</span>
+          <span>{{ matchesByDate.get(date)?.length || 0 }} matches</span>
         </div>
         <MatchRow
-          v-for="(match, index) in items"
-          :key="`${match.utcDate}-${index}`"
+          v-for="match in matchesByDate.get(date) || []"
+          :key="match.id"
           :match="match"
+          :channels="channelsByMatch.get(match.id)"
         />
+        <article
+          v-for="listing in externalByDate.get(date) || []"
+          :key="listing.id"
+          class="external-match-row"
+        >
+          <time :datetime="listing.startsAt">{{ listingTime(listing.startsAt) }}</time>
+          <div>
+            <strong>{{ listing.label }}</strong
+            ><span>{{ listing.competitionName || 'External TV listing' }} · not enriched</span>
+          </div>
+          <span class="channel-list"
+            ><span v-for="channel in listing.channels" :key="channel">{{ channel }}</span></span
+          >
+        </article>
       </section>
     </div>
     <section v-else class="empty-hero matches-empty">
@@ -118,7 +167,8 @@ onMounted(async () => {
       <p>Try another date or ask an administrator to refresh sports data.</p>
     </section>
     <p class="attribution">
-      Football data provided by football-data.org. Times shown in your local timezone.
+      Football data provided by football-data.org. TV schedule provided by Footao. Times shown in
+      your local timezone.
     </p>
   </main>
 </template>

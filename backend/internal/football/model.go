@@ -36,6 +36,7 @@ type Season struct {
 }
 
 type Match struct {
+	ID             uuid.UUID   `json:"id"`
 	ProviderID     int         `json:"-"`
 	Competition    Competition `json:"competition"`
 	Season         Season      `json:"season"`

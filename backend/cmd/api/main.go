@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/vincentg2/pivot/backend/internal/auth"
+	"github.com/vincentg2/pivot/backend/internal/broadcast"
 	"github.com/vincentg2/pivot/backend/internal/catalog"
 	"github.com/vincentg2/pivot/backend/internal/config"
 	"github.com/vincentg2/pivot/backend/internal/database"
@@ -48,6 +49,8 @@ func main() {
 	catalogHandler := catalog.NewHandler(catalogService, logger)
 	footballService := football.NewService(football.NewPostgresRepository(pool), football.NewFootballDataConnector(cfg.FootballDataAPIKey))
 	footballHandler := football.NewHandler(footballService, logger)
+	broadcastService := broadcast.NewService(broadcast.NewPostgresRepository(pool), broadcast.NewFootaoConnector(cfg.FootaoEnabled, cfg.FootaoUserAgent))
+	broadcastHandler := broadcast.NewHandler(broadcastService, logger)
 
 	e := echo.New()
 	e.HideBanner = true
@@ -89,6 +92,7 @@ func main() {
 	api.PUT("/favorites", catalogHandler.ReplaceFavorites, authHandler.RequireSession)
 	api.GET("/matches", footballHandler.Matches, authHandler.RequireSession)
 	api.GET("/standings", footballHandler.Standing, authHandler.RequireSession)
+	api.GET("/broadcasts", broadcastHandler.List, authHandler.RequireSession)
 	admin := api.Group("/admin", authHandler.RequireAdmin)
 	admin.GET("/invitations", inviteHandler.List)
 	admin.POST("/invitations", inviteHandler.Create)
@@ -97,6 +101,12 @@ func main() {
 	admin.POST("/collections/football-data", catalogHandler.Sync)
 	admin.GET("/collections/football-data/sport", footballHandler.CollectionStatus)
 	admin.POST("/collections/football-data/sport", footballHandler.Sync)
+	admin.GET("/collections/footao", broadcastHandler.CollectionStatus)
+	admin.POST("/collections/footao", broadcastHandler.Sync)
+	admin.GET("/broadcasts", broadcastHandler.AdminList)
+	admin.PUT("/broadcasts/:id/correction", broadcastHandler.Correct)
+	admin.DELETE("/broadcasts/:id/correction", broadcastHandler.Clear)
+	admin.GET("/broadcasts/audit", broadcastHandler.Audit)
 
 	go func() {
 		logger.Info("server starting", "address", cfg.Address, "environment", cfg.Environment)

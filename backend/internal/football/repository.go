@@ -18,7 +18,7 @@ func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
 
 func (r *PostgresRepository) ListMatches(ctx context.Context, userID uuid.UUID, from, to time.Time, competitionCode string, clubID *uuid.UUID) ([]Match, error) {
 	rows, err := r.pool.Query(ctx, `
-		SELECT m.provider_id,m.utc_date,m.status,m.stage,m.matchday,m.home_score,m.away_score,
+		SELECT m.id,m.provider_id,m.utc_date,m.status,m.stage,m.matchday,m.home_score,m.away_score,
 		       c.id,c.provider_code,c.name,s.provider_id,s.start_date,s.end_date,s.current,
 		       hc.id,m.home_name,coalesce(hc.short_name,''),coalesce(hc.tla,''),hc.crest_url,
 		       ac.id,m.away_name,coalesce(ac.short_name,''),coalesce(ac.tla,''),ac.crest_url,
@@ -39,7 +39,7 @@ func (r *PostgresRepository) ListMatches(ctx context.Context, userID uuid.UUID, 
 	items := make([]Match, 0)
 	for rows.Next() {
 		var item Match
-		if err := rows.Scan(&item.ProviderID, &item.UTCDate, &item.Status, &item.Stage, &item.Matchday, &item.HomeScore, &item.AwayScore,
+		if err := rows.Scan(&item.ID, &item.ProviderID, &item.UTCDate, &item.Status, &item.Stage, &item.Matchday, &item.HomeScore, &item.AwayScore,
 			&item.Competition.ID, &item.Competition.Code, &item.Competition.Name, &item.Season.ProviderID, &item.Season.StartDate, &item.Season.EndDate, &item.Season.Current,
 			&item.Home.ID, &item.Home.Name, &item.Home.ShortName, &item.Home.TLA, &item.Home.CrestURL,
 			&item.Away.ID, &item.Away.Name, &item.Away.ShortName, &item.Away.TLA, &item.Away.CrestURL, &item.Favorite); err != nil {

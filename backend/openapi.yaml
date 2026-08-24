@@ -105,6 +105,16 @@ paths:
       responses:
         '200': {description: Current total standing and attribution}
         '404': {$ref: '#/components/responses/Problem'}
+  /broadcasts:
+    get:
+      summary: List effective French TV listings in a date window
+      parameters:
+        - {name: from, in: query, schema: {type: string, format: date}}
+        - {name: to, in: query, schema: {type: string, format: date}}
+      security: [{cookieSession: []}]
+      responses:
+        '200': {description: TV listings with linked-match and external markers plus attribution}
+        '400': {$ref: '#/components/responses/Problem'}
   /admin/invitations:
     get:
       summary: List invitations
@@ -138,6 +148,50 @@ paths:
         '200': {description: Sports collection completed}
         '409': {$ref: '#/components/responses/Problem'}
         '502': {$ref: '#/components/responses/Problem'}
+  /admin/collections/footao:
+    get:
+      summary: Read the opt-in Footao connector and latest collection status
+      security: [{cookieSession: []}]
+      responses: {'200': {description: TV collection status}}
+    post:
+      summary: Synchronize today through the next seven days of French TV listings
+      security: [{cookieSession: []}]
+      responses:
+        '200': {description: TV collection completed}
+        '409': {$ref: '#/components/responses/Problem'}
+        '502': {$ref: '#/components/responses/Problem'}
+  /admin/broadcasts:
+    get:
+      summary: List TV listings including hidden operator corrections
+      security: [{cookieSession: []}]
+      responses: {'200': {description: Administrative TV listing view}}
+  /admin/broadcasts/{id}/correction:
+    put:
+      summary: Create or replace an audited operator correction
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      security: [{cookieSession: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/BroadcastCorrection'}
+      responses:
+        '204': {description: Correction saved and audited}
+        '404': {$ref: '#/components/responses/Problem'}
+    delete:
+      summary: Clear a correction and restore imported values
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      security: [{cookieSession: []}]
+      responses:
+        '204': {description: Correction cleared and audited}
+        '404': {$ref: '#/components/responses/Problem'}
+  /admin/broadcasts/audit:
+    get:
+      summary: List recent TV correction audit entries
+      security: [{cookieSession: []}]
+      responses: {'200': {description: Most recent 100 audit entries}}
 components:
   securitySchemes:
     cookieSession: {type: apiKey, in: cookie, name: pivot_session}
@@ -158,6 +212,19 @@ components:
         title: {type: string}
         status: {type: integer}
         detail: {type: string}
+    BroadcastCorrection:
+      type: object
+      required: [startsAt, label, kind, channels]
+      properties:
+        startsAt: {type: string, format: date-time}
+        homeName: {type: string, maxLength: 140}
+        awayName: {type: string, maxLength: 140}
+        label: {type: string, maxLength: 280}
+        competitionName: {type: string, maxLength: 140}
+        kind: {type: string, enum: [live, delayed, replay]}
+        channels: {type: array, maxItems: 12, items: {type: string, maxLength: 100}}
+        hidden: {type: boolean}
+        note: {type: string, maxLength: 300}
   responses:
     Problem:
       description: RFC 7807 problem

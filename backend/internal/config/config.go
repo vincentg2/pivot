@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -17,6 +18,8 @@ type Config struct {
 	SessionTTL         time.Duration
 	LoginRateLimit     int
 	FootballDataAPIKey string
+	FootaoEnabled      bool
+	FootaoUserAgent    string
 }
 
 func Load() (Config, error) {
@@ -32,6 +35,10 @@ func Load() (Config, error) {
 	if err != nil || limit < 1 {
 		return Config{}, fmt.Errorf("LOGIN_RATE_LIMIT must be a positive integer")
 	}
+	footaoEnabled, err := strconv.ParseBool(env("FOOTAO_ENABLED", "false"))
+	if err != nil {
+		return Config{}, fmt.Errorf("parse FOOTAO_ENABLED: %w", err)
+	}
 	cfg := Config{
 		Environment:        env("APP_ENV", "development"),
 		Address:            env("APP_ADDR", ":8080"),
@@ -42,9 +49,14 @@ func Load() (Config, error) {
 		SessionTTL:         ttl,
 		LoginRateLimit:     limit,
 		FootballDataAPIKey: os.Getenv("FOOTBALL_DATA_API_KEY"),
+		FootaoEnabled:      footaoEnabled,
+		FootaoUserAgent:    env("FOOTAO_USER_AGENT", "Pivot/0.1 (+https://github.com/OWNER/pivot)"),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("DATABASE_URL is required")
+	}
+	if cfg.FootaoEnabled && (strings.TrimSpace(cfg.FootaoUserAgent) == "" || strings.Contains(cfg.FootaoUserAgent, "OWNER")) {
+		return Config{}, fmt.Errorf("FOOTAO_USER_AGENT must identify the operator when FOOTAO_ENABLED is true")
 	}
 	return cfg, nil
 }

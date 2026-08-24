@@ -4,9 +4,9 @@ Pivot is a private, invitation-only football dashboard for friends and a self-ho
 
 > **Français :** Pivot est un tableau de bord football privé et responsive, accessible sur invitation. Le projet est auto-hébergeable ; les connecteurs de données restent optionnels et chaque opérateur fournit ses propres accès.
 
-## Milestones 1–3
+## Milestones 1–4
 
-The foundation includes the Vue/Go monorepo, responsive theme system, PostgreSQL, opaque cookie sessions, invitation registration, profiles, account deletion, administration, tests, CI, and development tooling. The product now includes a local club catalog, club profiles, five synchronized favorites, fixtures and results by date, current domestic standings, and operator-controlled football-data.org collections.
+The foundation includes the Vue/Go monorepo, responsive theme system, PostgreSQL, opaque cookie sessions, invitation registration, profiles, account deletion, administration, tests, CI, and development tooling. The product now includes a local club catalog, club profiles, five synchronized favorites, fixtures and results by date, current domestic standings, French TV listings, and operator-controlled data collections. TV-only matches remain visibly external, while cautious matching enriches recognized catalog fixtures.
 
 ## Architecture
 
@@ -36,6 +36,8 @@ The application works with an empty catalog and no provider key. To populate the
 
 After the club catalog is populated, run **Admin → Sports collection → Run sports data** or `just collect-sport`. The importer deliberately paces provider requests, stores yesterday through the next seven days, refreshes current standings, and preserves previously encountered seasons and matches.
 
+The Footao connector is a separate, explicit opt-in. Only enable it when the operator has permission: set `FOOTAO_ENABLED=true` and replace the placeholder `FOOTAO_USER_AGENT` with an identifiable contact URL, restart the API, migrate, then use **Admin → Television collection → Run TV data** or `just collect-tv`. Pivot performs one central server-side fetch with bounded retries; browsers never contact Footao. Manual listing corrections and restores are recorded in the admin audit trail.
+
 ## Self-hosting with Docker Compose
 
 The checked-in Compose file intentionally runs PostgreSQL only for local development. A production Compose profile and first-install web assistant will land before the first public release. Until then, build `frontend/` as static assets, run the Go API behind TLS, set a strong PostgreSQL password, and set `SESSION_SECURE=true`.
@@ -46,4 +48,4 @@ Pivot works without data-provider keys. Read [data source policy](docs/data-sour
 
 ## Status
 
-Milestone 3 of 5. The repository remains private until the owner explicitly decides to publish it.
+Milestone 4 of 5. The repository remains private until the owner explicitly decides to publish it.

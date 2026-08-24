@@ -20,6 +20,7 @@ async function logout() {
       <RouterLink to="/clubs" class="text-link">Clubs</RouterLink>
       <RouterLink to="/matches" class="text-link">Matches</RouterLink>
       <RouterLink to="/standings" class="text-link">Tables</RouterLink>
+      <RouterLink to="/tv" class="text-link">TV</RouterLink>
       <RouterLink v-if="session.user?.role === 'admin'" to="/admin" class="text-link"
         >Admin</RouterLink
       >

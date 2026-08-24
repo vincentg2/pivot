@@ -11,6 +11,7 @@ export interface MatchCompetition {
   name: string
 }
 export interface FootballMatch {
+  id: string
   competition: MatchCompetition
   utcDate: string
   status: string

@@ -33,6 +33,9 @@ seed-demo:
 collect-sport:
     cd backend && go run ./cmd/collect-sport
 
+collect-tv:
+    cd backend && go run ./cmd/collect-tv
+
 create-admin email nickname:
     cd backend && go run ./cmd/create-admin "{{email}}" "{{nickname}}"
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import { Copy, Plus, RefreshCw, X } from 'lucide-vue-next'
+import { Copy, Plus, RefreshCw, Tv, X } from 'lucide-vue-next'
 import { api } from '@/lib/api'
 
 interface Invitation {
@@ -25,8 +25,10 @@ interface CollectionRun {
 }
 const collection = ref<{ enabled: boolean; latestRun: CollectionRun | null } | null>(null)
 const sportCollection = ref<{ enabled: boolean; latestRun: CollectionRun | null } | null>(null)
+const footaoCollection = ref<{ enabled: boolean; latestRun: CollectionRun | null } | null>(null)
 const syncing = ref(false)
 const syncingSport = ref(false)
+const syncingFootao = ref(false)
 const syncError = ref('')
 async function load() {
   loading.value = true
@@ -41,6 +43,11 @@ async function loadCollection() {
 async function loadSportCollection() {
   sportCollection.value = await api<{ enabled: boolean; latestRun: CollectionRun | null }>(
     '/admin/collections/football-data/sport',
+  )
+}
+async function loadFootaoCollection() {
+  footaoCollection.value = await api<{ enabled: boolean; latestRun: CollectionRun | null }>(
+    '/admin/collections/footao',
   )
 }
 async function synchronize() {
@@ -67,6 +74,18 @@ async function synchronizeSport() {
     syncingSport.value = false
   }
 }
+async function synchronizeFootao() {
+  syncingFootao.value = true
+  syncError.value = ''
+  try {
+    await api('/admin/collections/footao', { method: 'POST' })
+    await loadFootaoCollection()
+  } catch (error) {
+    syncError.value = error instanceof Error ? error.message : 'Synchronization failed.'
+  } finally {
+    syncingFootao.value = false
+  }
+}
 async function create() {
   const response = await api<{ code: string }>('/admin/invitations', {
     method: 'POST',
@@ -90,7 +109,7 @@ async function copyCode() {
   await navigator.clipboard.writeText(revealedCode.value)
 }
 onMounted(() => {
-  void Promise.all([load(), loadCollection(), loadSportCollection()])
+  void Promise.all([load(), loadCollection(), loadSportCollection(), loadFootaoCollection()])
 })
 </script>
 
@@ -147,6 +166,36 @@ onMounted(() => {
       >
         <RefreshCw :size="17" :class="{ spinning: syncingSport }" />{{
           syncingSport ? 'Synchronizing…' : 'Run sports data'
+        }}
+      </button>
+    </section>
+    <section class="settings-card collection-card">
+      <div>
+        <p class="eyebrow">Television collection</p>
+        <h2>Footao</h2>
+        <p v-if="footaoCollection?.enabled" class="quiet">
+          Opt-in connector enabled. One central server-side request imports the next seven days.
+        </p>
+        <p v-else class="quiet">
+          Disabled by default. Set <code>FOOTAO_ENABLED=true</code> and an identifiable
+          <code>FOOTAO_USER_AGENT</code> only when your installation is authorized.
+        </p>
+        <p v-if="footaoCollection?.latestRun" class="collection-status">
+          <span class="status">{{ footaoCollection.latestRun.status }}</span>
+          {{ footaoCollection.latestRun.recordsCount }} listings ·
+          {{ new Date(footaoCollection.latestRun.startedAt).toLocaleString() }}
+        </p>
+        <RouterLink to="/admin/tv" class="admin-detail-link"
+          ><Tv :size="16" /> Review listings and audit</RouterLink
+        >
+      </div>
+      <button
+        class="button secondary"
+        :disabled="!footaoCollection?.enabled || syncingFootao"
+        @click="synchronizeFootao"
+      >
+        <RefreshCw :size="17" :class="{ spinning: syncingFootao }" />{{
+          syncingFootao ? 'Synchronizing…' : 'Run TV data'
         }}
       </button>
     </section>

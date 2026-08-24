@@ -8,6 +8,8 @@ import CatalogView from '@/views/CatalogView.vue'
 import ClubView from '@/views/ClubView.vue'
 import MatchesView from '@/views/MatchesView.vue'
 import StandingsView from '@/views/StandingsView.vue'
+import BroadcastsView from '@/views/BroadcastsView.vue'
+import AdminBroadcastsView from '@/views/AdminBroadcastsView.vue'
 import { useSessionStore } from '@/stores/session'
 
 const router = createRouter({
@@ -21,7 +23,14 @@ const router = createRouter({
     { path: '/clubs/:id', name: 'club', component: ClubView, meta: { auth: true } },
     { path: '/matches', name: 'matches', component: MatchesView, meta: { auth: true } },
     { path: '/standings', name: 'standings', component: StandingsView, meta: { auth: true } },
+    { path: '/tv', name: 'tv', component: BroadcastsView, meta: { auth: true } },
     { path: '/admin', name: 'admin', component: AdminView, meta: { auth: true, admin: true } },
+    {
+      path: '/admin/tv',
+      name: 'admin-tv',
+      component: AdminBroadcastsView,
+      meta: { auth: true, admin: true },
+    },
   ],
 })
 
