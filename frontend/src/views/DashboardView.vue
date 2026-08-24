@@ -1,14 +1,27 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ArrowRight, CalendarDays, Radio, Trophy } from 'lucide-vue-next'
 import AvatarMonogram from '@/components/AvatarMonogram.vue'
 import ClubMark from '@/components/ClubMark.vue'
+import MatchRow from '@/components/MatchRow.vue'
+import { api } from '@/lib/api'
+import { addDays, localDate, type FootballMatch } from '@/lib/football'
 import { useSessionStore } from '@/stores/session'
 import { useFavoritesStore } from '@/stores/favorites'
 const session = useSessionStore()
 const favorites = useFavoritesStore()
-onMounted(() => {
-  if (!favorites.ready) void favorites.load()
+const favoriteMatches = ref<FootballMatch[]>([])
+const todayLabel = computed(() =>
+  new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(
+    new Date(),
+  ),
+)
+onMounted(async () => {
+  if (!favorites.ready) await favorites.load()
+  const from = localDate(new Date())
+  const to = localDate(addDays(new Date(), 7))
+  const response = await api<{ matches: FootballMatch[] }>(`/matches?from=${from}&to=${to}`)
+  favoriteMatches.value = response.matches.filter((match) => match.favorite).slice(0, 5)
 })
 </script>
 
@@ -16,7 +29,7 @@ onMounted(() => {
   <main class="dashboard page-width">
     <section class="welcome-row">
       <div>
-        <p class="eyebrow">Monday, 24 August</p>
+        <p class="eyebrow">{{ todayLabel }}</p>
         <h1>Good evening, {{ session.user?.nickname }}.</h1>
         <p class="lede">Here’s the shape of your football week.</p>
       </div>
@@ -26,6 +39,25 @@ onMounted(() => {
         :seed="session.user.avatarSeed"
         size="lg"
       />
+    </section>
+    <section v-if="favorites.clubs.length" class="dashboard-matches">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Next for your clubs</p>
+          <h2>The week ahead</h2>
+        </div>
+        <RouterLink to="/matches" class="text-link">All matches</RouterLink>
+      </div>
+      <div v-if="favoriteMatches.length" class="compact-matches">
+        <MatchRow
+          v-for="(match, index) in favoriteMatches"
+          :key="`${match.utcDate}-${index}`"
+          :match="match"
+        />
+      </div>
+      <p v-else class="quiet dashboard-empty-line">
+        No matches synchronized for your favorites this week.
+      </p>
     </section>
     <section v-if="favorites.ready && favorites.clubs.length" class="favorite-dashboard">
       <div class="section-heading">
@@ -53,27 +85,25 @@ onMounted(() => {
       /></RouterLink>
     </section>
     <section class="preview-grid" aria-label="Upcoming Pivot sections">
-      <article>
+      <RouterLink to="/matches" class="preview-card">
         <CalendarDays />
         <p class="eyebrow">Matches</p>
         <h3>The week ahead</h3>
         <p>Yesterday, today, tomorrow and the next seven days.</p>
-      </article>
+      </RouterLink>
       <article>
         <Radio />
         <p class="eyebrow">On television</p>
         <h3>Where to watch</h3>
         <p>French listings, centrally collected with operator consent.</p>
       </article>
-      <article>
+      <RouterLink to="/standings" class="preview-card">
         <Trophy />
         <p class="eyebrow">Tables</p>
         <h3>The wider picture</h3>
         <p>Domestic standings with clear source attribution.</p>
-      </article>
+      </RouterLink>
     </section>
-    <p class="attribution">
-      Data connectors are currently off. Future match data: football-data.org.
-    </p>
+    <p class="attribution">Football data provided by football-data.org.</p>
   </main>
 </template>

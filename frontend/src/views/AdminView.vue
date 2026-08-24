@@ -24,7 +24,9 @@ interface CollectionRun {
   errorMessage?: string
 }
 const collection = ref<{ enabled: boolean; latestRun: CollectionRun | null } | null>(null)
+const sportCollection = ref<{ enabled: boolean; latestRun: CollectionRun | null } | null>(null)
 const syncing = ref(false)
+const syncingSport = ref(false)
 const syncError = ref('')
 async function load() {
   loading.value = true
@@ -34,6 +36,11 @@ async function load() {
 async function loadCollection() {
   collection.value = await api<{ enabled: boolean; latestRun: CollectionRun | null }>(
     '/admin/collections/football-data',
+  )
+}
+async function loadSportCollection() {
+  sportCollection.value = await api<{ enabled: boolean; latestRun: CollectionRun | null }>(
+    '/admin/collections/football-data/sport',
   )
 }
 async function synchronize() {
@@ -46,6 +53,18 @@ async function synchronize() {
     syncError.value = error instanceof Error ? error.message : 'Synchronization failed.'
   } finally {
     syncing.value = false
+  }
+}
+async function synchronizeSport() {
+  syncingSport.value = true
+  syncError.value = ''
+  try {
+    await api('/admin/collections/football-data/sport', { method: 'POST' })
+    await loadSportCollection()
+  } catch (error) {
+    syncError.value = error instanceof Error ? error.message : 'Synchronization failed.'
+  } finally {
+    syncingSport.value = false
   }
 }
 async function create() {
@@ -71,7 +90,7 @@ async function copyCode() {
   await navigator.clipboard.writeText(revealedCode.value)
 }
 onMounted(() => {
-  void Promise.all([load(), loadCollection()])
+  void Promise.all([load(), loadCollection(), loadSportCollection()])
 })
 </script>
 
@@ -105,6 +124,29 @@ onMounted(() => {
       >
         <RefreshCw :size="17" :class="{ spinning: syncing }" />{{
           syncing ? 'Synchronizing…' : 'Run now'
+        }}
+      </button>
+    </section>
+    <section class="settings-card collection-card">
+      <div>
+        <p class="eyebrow">Sports collection</p>
+        <h2>Matches & standings</h2>
+        <p class="quiet">
+          Refreshes yesterday, today and the next seven days for the five major leagues.
+        </p>
+        <p v-if="sportCollection?.latestRun" class="collection-status">
+          <span class="status">{{ sportCollection.latestRun.status }}</span>
+          {{ sportCollection.latestRun.recordsCount }} records ·
+          {{ new Date(sportCollection.latestRun.startedAt).toLocaleString() }}
+        </p>
+      </div>
+      <button
+        class="button secondary"
+        :disabled="!sportCollection?.enabled || syncingSport"
+        @click="synchronizeSport"
+      >
+        <RefreshCw :size="17" :class="{ spinning: syncingSport }" />{{
+          syncingSport ? 'Synchronizing…' : 'Run sports data'
         }}
       </button>
     </section>

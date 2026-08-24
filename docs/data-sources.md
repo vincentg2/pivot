@@ -8,6 +8,8 @@ Remote badge display is an operator setting (`VITE_REMOTE_LOGOS_ENABLED=false` b
 
 Suggested schedule: club catalog weekly; fixtures and standings four times daily. Past seasons are retained.
 
+The sports collector fetches yesterday through the next seven days and the current total standings for the five major leagues. Requests are paced for conservative free-plan usage. Repeated runs upsert matches and tables while leaving older seasons intact.
+
 ## Footao
 
 The French TV listing connector is centrally fetched by the backend, disabled by default, and must never be called from a browser. Enabling it confirms the operator has permission. Requests use an identifiable User-Agent, conservative backoff, and stop on repeated failures. Audited admin corrections override imported values.

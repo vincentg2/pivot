@@ -84,6 +84,27 @@ paths:
       responses:
         '200': {description: Updated favorite clubs}
         '422': {$ref: '#/components/responses/Problem'}
+  /matches:
+    get:
+      summary: List fixtures and results in a date window
+      parameters:
+        - {name: from, in: query, schema: {type: string, format: date}}
+        - {name: to, in: query, schema: {type: string, format: date}}
+        - {name: competition, in: query, schema: {type: string}}
+        - {name: club, in: query, schema: {type: string, format: uuid}}
+      security: [{cookieSession: []}]
+      responses:
+        '200': {description: Matches with favorite-club markers and attribution}
+        '400': {$ref: '#/components/responses/Problem'}
+  /standings:
+    get:
+      summary: Read the current domestic standing
+      parameters:
+        - {name: competition, in: query, required: true, schema: {type: string}}
+      security: [{cookieSession: []}]
+      responses:
+        '200': {description: Current total standing and attribution}
+        '404': {$ref: '#/components/responses/Problem'}
   /admin/invitations:
     get:
       summary: List invitations
@@ -103,6 +124,18 @@ paths:
       security: [{cookieSession: []}]
       responses:
         '200': {description: Collection completed}
+        '409': {$ref: '#/components/responses/Problem'}
+        '502': {$ref: '#/components/responses/Problem'}
+  /admin/collections/football-data/sport:
+    get:
+      summary: Read the latest match and standing collection status
+      security: [{cookieSession: []}]
+      responses: {'200': {description: Sports collection status}}
+    post:
+      summary: Synchronize yesterday through the next seven days and current standings
+      security: [{cookieSession: []}]
+      responses:
+        '200': {description: Sports collection completed}
         '409': {$ref: '#/components/responses/Problem'}
         '502': {$ref: '#/components/responses/Problem'}
 components:

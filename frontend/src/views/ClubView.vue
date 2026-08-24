@@ -3,13 +3,16 @@ import { onMounted, ref } from 'vue'
 import { ArrowLeft, ExternalLink, Heart, MapPin } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 import ClubMark from '@/components/ClubMark.vue'
+import MatchRow from '@/components/MatchRow.vue'
 import { api } from '@/lib/api'
+import { addDays, localDate, type FootballMatch } from '@/lib/football'
 import { useFavoritesStore, type Club } from '@/stores/favorites'
 
 const route = useRoute()
 const favorites = useFavoritesStore()
 const club = ref<Club | null>(null)
 const notice = ref('')
+const matches = ref<FootballMatch[]>([])
 
 async function toggle() {
   if (!club.value) return
@@ -23,6 +26,13 @@ async function toggle() {
 onMounted(async () => {
   if (!favorites.ready) await favorites.load()
   club.value = (await api<{ club: Club }>(`/clubs/${route.params.id}`)).club
+  const from = localDate(addDays(new Date(), -1))
+  const to = localDate(addDays(new Date(), 7))
+  matches.value = (
+    await api<{ matches: FootballMatch[] }>(
+      `/matches?from=${from}&to=${to}&club=${route.params.id}`,
+    )
+  ).matches
 })
 </script>
 
@@ -63,10 +73,22 @@ onMounted(async () => {
           /></a>
         </article>
       </section>
-      <section class="empty-hero club-next">
-        <p class="eyebrow">Coming in milestone three</p>
-        <h2>Matches, results and standings</h2>
-        <p>This page is ready for the club’s schedule and competitive context.</p>
+      <section class="club-fixtures">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Recent & upcoming</p>
+            <h2>Matches</h2>
+          </div>
+          <RouterLink to="/matches" class="text-link">All matches</RouterLink>
+        </div>
+        <div v-if="matches.length" class="compact-matches">
+          <MatchRow
+            v-for="(match, index) in matches"
+            :key="`${match.utcDate}-${index}`"
+            :match="match"
+          />
+        </div>
+        <p v-else class="quiet dashboard-empty-line">No matches synchronized in this window.</p>
       </section>
       <p class="attribution">Football data provided by football-data.org.</p>
     </template>

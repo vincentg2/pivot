@@ -30,6 +30,9 @@ dev:
 seed-demo:
     cd backend && go run ./cmd/seed-demo
 
+collect-sport:
+    cd backend && go run ./cmd/collect-sport
+
 create-admin email nickname:
     cd backend && go run ./cmd/create-admin "{{email}}" "{{nickname}}"
 
