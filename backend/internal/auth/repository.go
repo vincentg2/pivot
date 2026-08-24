@@ -89,3 +89,44 @@ func (r *PostgresRepository) DeleteSession(ctx context.Context, hash []byte) err
 	_, err := r.pool.Exec(ctx, `DELETE FROM sessions WHERE token_hash=$1`, hash)
 	return err
 }
+
+func (r *PostgresRepository) CreatePasswordReset(ctx context.Context, userID, createdBy uuid.UUID, hash []byte, expiresAt time.Time) error {
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	if _, err = tx.Exec(ctx, `UPDATE password_reset_links SET used_at=now() WHERE user_id=$1 AND used_at IS NULL`, userID); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(ctx, `INSERT INTO password_reset_links(id,token_hash,user_id,created_by,expires_at) VALUES($1,$2,$3,$4,$5)`, uuid.New(), hash, userID, createdBy, expiresAt); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+func (r *PostgresRepository) ConsumePasswordReset(ctx context.Context, hash []byte, passwordHash string, now time.Time) error {
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	var userID uuid.UUID
+	err = tx.QueryRow(ctx, `SELECT user_id FROM password_reset_links WHERE token_hash=$1 AND used_at IS NULL AND expires_at>$2 FOR UPDATE`, hash, now).Scan(&userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrPasswordResetInvalid
+	}
+	if err != nil {
+		return err
+	}
+	if _, err = tx.Exec(ctx, `UPDATE users SET password_hash=$2,updated_at=$3 WHERE id=$1`, userID, passwordHash, now); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(ctx, `UPDATE password_reset_links SET used_at=$2 WHERE user_id=$1 AND used_at IS NULL`, userID, now); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(ctx, `DELETE FROM sessions WHERE user_id=$1`, userID); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}

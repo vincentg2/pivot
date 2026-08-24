@@ -13,6 +13,7 @@ import AdminBroadcastsView from '@/views/AdminBroadcastsView.vue'
 import NewsView from '@/views/NewsView.vue'
 import AdminNewsView from '@/views/AdminNewsView.vue'
 import SetupView from '@/views/SetupView.vue'
+import ResetPasswordView from '@/views/ResetPasswordView.vue'
 import { setupRequired } from '@/lib/installation'
 import { useSessionStore } from '@/stores/session'
 
@@ -23,6 +24,12 @@ const router = createRouter({
     { path: '/login', name: 'login', component: LoginView, meta: { guest: true } },
     { path: '/register', name: 'register', component: RegisterView, meta: { guest: true } },
     { path: '/setup', name: 'setup', component: SetupView, meta: { guest: true } },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: ResetPasswordView,
+      meta: { authLayout: true },
+    },
     { path: '/profile', name: 'profile', component: ProfileView, meta: { auth: true } },
     { path: '/clubs', name: 'clubs', component: CatalogView, meta: { auth: true } },
     { path: '/clubs/:id', name: 'club', component: ClubView, meta: { auth: true } },

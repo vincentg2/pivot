@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import { Copy, Newspaper, Plus, RefreshCw, Tv, X } from 'lucide-vue-next'
-import { api } from '@/lib/api'
+import { Copy, KeyRound, Newspaper, Plus, RefreshCw, Tv, X } from 'lucide-vue-next'
+import { api, ApiError } from '@/lib/api'
 
 interface Invitation {
   id: string
@@ -14,6 +14,9 @@ interface Invitation {
 }
 const invitations = ref<Invitation[]>([])
 const revealedCode = ref('')
+const revealedResetLink = ref('')
+const resetError = ref('')
+const resetEmail = ref('')
 const loading = ref(true)
 const form = reactive({ label: '', maxUses: 1, expiresAt: '' })
 interface CollectionRun {
@@ -108,6 +111,24 @@ async function revoke(id: string) {
 async function copyCode() {
   await navigator.clipboard.writeText(revealedCode.value)
 }
+async function createPasswordReset() {
+  resetError.value = ''
+  revealedResetLink.value = ''
+  try {
+    const response = await api<{ token: string; expiresAt: string }>('/admin/password-resets', {
+      method: 'POST',
+      body: JSON.stringify({ email: resetEmail.value }),
+    })
+    revealedResetLink.value = `${window.location.origin}/reset-password?token=${encodeURIComponent(response.token)}`
+    resetEmail.value = ''
+  } catch (caught) {
+    resetError.value =
+      caught instanceof ApiError ? caught.message : 'Unable to create a reset link.'
+  }
+}
+async function copyResetLink() {
+  await navigator.clipboard.writeText(revealedResetLink.value)
+}
 onMounted(() => {
   void Promise.all([load(), loadCollection(), loadSportCollection(), loadFootaoCollection()])
 })
@@ -164,7 +185,7 @@ onMounted(() => {
         <p class="eyebrow">Sports collection</p>
         <h2>Matches & standings</h2>
         <p class="quiet">
-          Refreshes yesterday, today and the next seven days for the five major leagues.
+          Refreshes yesterday through the next 30 days for the five major leagues.
         </p>
         <p v-if="sportCollection?.latestRun" class="collection-status">
           <span class="status">{{ sportCollection.latestRun.status }}</span>
@@ -187,7 +208,7 @@ onMounted(() => {
         <p class="eyebrow">Television collection</p>
         <h2>Footao</h2>
         <p v-if="footaoCollection?.enabled" class="quiet">
-          Opt-in connector enabled. One central server-side request imports the next seven days.
+          Opt-in connector enabled. One central server-side request imports the next two months.
         </p>
         <p v-else class="quiet">
           Disabled by default. Set <code>FOOTAO_ENABLED=true</code> and an identifiable
@@ -211,6 +232,34 @@ onMounted(() => {
           syncingFootao ? 'Synchronizing…' : 'Run TV data'
         }}
       </button>
+    </section>
+    <section class="settings-card admin-create">
+      <p class="eyebrow">Member recovery</p>
+      <h2>Generate a password reset link</h2>
+      <p class="quiet">
+        The link expires after 30 minutes, works once, and revokes the member’s existing sessions.
+      </p>
+      <form class="inline-form password-reset-form" @submit.prevent="createPasswordReset">
+        <label
+          >Member email<input
+            v-model="resetEmail"
+            type="email"
+            autocomplete="off"
+            placeholder="friend@example.com"
+            required
+        /></label>
+        <button class="button secondary"><KeyRound :size="17" />Generate reset link</button>
+      </form>
+      <p v-if="resetError" class="form-error" role="alert">{{ resetError }}</p>
+      <div v-if="revealedResetLink" class="one-time-code reset-link" role="status">
+        <div>
+          <strong>{{ revealedResetLink }}</strong
+          ><span>Copy it now. This temporary link will not be shown again.</span>
+        </div>
+        <button class="icon-link" aria-label="Copy password reset link" @click="copyResetLink">
+          <Copy :size="18" />
+        </button>
+      </div>
     </section>
     <section class="settings-card admin-create">
       <h2>Create an invitation</h2>

@@ -30,4 +30,12 @@ type Repository interface {
 	CreateSession(context.Context, uuid.UUID, []byte, time.Time, string, string) error
 	FindUserBySession(context.Context, []byte) (User, error)
 	DeleteSession(context.Context, []byte) error
+	CreatePasswordReset(context.Context, uuid.UUID, uuid.UUID, []byte, time.Time) error
+	ConsumePasswordReset(context.Context, []byte, string, time.Time) error
+}
+
+type PasswordReset struct {
+	Token     string    `json:"token"`
+	ExpiresAt time.Time `json:"expiresAt"`
+	User      User      `json:"user"`
 }

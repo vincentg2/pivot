@@ -34,6 +34,15 @@ type loginRequest struct {
 	Password string `json:"password" validate:"required,max=128"`
 }
 
+type createPasswordResetRequest struct {
+	Email string `json:"email" validate:"required,email,max=254"`
+}
+
+type resetPasswordRequest struct {
+	Token    string `json:"token" validate:"required,min=20,max=200"`
+	Password string `json:"password" validate:"required,min=12,max=128"`
+}
+
 func (h *Handler) Register(c echo.Context) error {
 	var request registerRequest
 	if err := c.Bind(&request); err != nil || c.Validate(request) != nil {
@@ -74,6 +83,38 @@ func (h *Handler) Logout(c echo.Context) error {
 		_ = h.service.Logout(c.Request().Context(), cookie.Value)
 	}
 	h.setCookie(c, "", -1)
+	return c.NoContent(http.StatusNoContent)
+}
+
+func (h *Handler) CreatePasswordReset(c echo.Context) error {
+	var request createPasswordResetRequest
+	if err := c.Bind(&request); err != nil || c.Validate(request) != nil {
+		return httpx.NewProblem(400, "Invalid reset request", "Enter the member's email address.")
+	}
+	current, _ := UserFromContext(c)
+	reset, err := h.service.CreatePasswordReset(c.Request().Context(), request.Email, current.ID)
+	if errors.Is(err, ErrNotFound) {
+		return httpx.NewProblem(404, "Member not found", "No Pivot account uses this email address.")
+	}
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusCreated, map[string]any{
+		"token": reset.Token, "expiresAt": reset.ExpiresAt,
+		"user": map[string]any{"email": reset.User.Email, "nickname": reset.User.Nickname},
+	})
+}
+
+func (h *Handler) ResetPassword(c echo.Context) error {
+	var request resetPasswordRequest
+	if err := c.Bind(&request); err != nil || c.Validate(request) != nil {
+		return httpx.NewProblem(400, "Invalid password", "Use the complete reset link and a password of at least 12 characters.")
+	}
+	if err := h.service.ResetPassword(c.Request().Context(), request.Token, request.Password); errors.Is(err, ErrPasswordResetInvalid) {
+		return httpx.NewProblem(422, "Reset link unavailable", "This reset link is invalid, expired, or already used.")
+	} else if err != nil {
+		return err
+	}
 	return c.NoContent(http.StatusNoContent)
 }
 

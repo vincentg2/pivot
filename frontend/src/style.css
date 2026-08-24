@@ -1340,6 +1340,9 @@ small {
   align-items: end;
   gap: 1rem;
 }
+.password-reset-form {
+  grid-template-columns: minmax(260px, 1fr) auto;
+}
 .one-time-code {
   display: flex;
   margin-top: 1.5rem;
@@ -1356,6 +1359,9 @@ small {
 }
 .one-time-code strong {
   font-family: ui-monospace, monospace;
+}
+.reset-link strong {
+  overflow-wrap: anywhere;
 }
 .one-time-code span {
   color: var(--muted);

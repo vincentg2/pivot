@@ -14,6 +14,9 @@ import (
 )
 
 var ErrInvalidCredentials = errors.New("invalid credentials")
+var ErrPasswordResetInvalid = errors.New("password reset invalid")
+
+const passwordResetTTL = 30 * time.Minute
 
 type Clock func() time.Time
 
@@ -79,4 +82,31 @@ func (s *Service) Logout(ctx context.Context, token string) error {
 		return nil
 	}
 	return s.repo.DeleteSession(ctx, tokenHash(token))
+}
+
+func (s *Service) CreatePasswordReset(ctx context.Context, email string, createdBy uuid.UUID) (PasswordReset, error) {
+	user, err := s.repo.FindUserByEmail(ctx, normalizeEmail(email))
+	if err != nil {
+		return PasswordReset{}, err
+	}
+	token, err := randomToken(32)
+	if err != nil {
+		return PasswordReset{}, err
+	}
+	expiresAt := s.now().Add(passwordResetTTL)
+	if err := s.repo.CreatePasswordReset(ctx, user.ID, createdBy, tokenHash(token), expiresAt); err != nil {
+		return PasswordReset{}, err
+	}
+	return PasswordReset{Token: token, ExpiresAt: expiresAt, User: user}, nil
+}
+
+func (s *Service) ResetPassword(ctx context.Context, token, password string) error {
+	if strings.TrimSpace(token) == "" {
+		return ErrPasswordResetInvalid
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	return s.repo.ConsumePasswordReset(ctx, tokenHash(token), string(hash), s.now())
 }

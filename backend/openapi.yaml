@@ -39,6 +39,17 @@ paths:
       responses:
         '200': {description: Signed in}
         '401': {$ref: '#/components/responses/Problem'}
+  /auth/password-reset:
+    post:
+      summary: Consume a one-time administrator-issued reset token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PasswordReset'}
+      responses:
+        '204': {description: Password updated and existing sessions revoked}
+        '422': {$ref: '#/components/responses/Problem'}
   /auth/logout:
     post:
       summary: End the current session
@@ -148,6 +159,22 @@ paths:
       summary: Create an invitation and return its code once
       security: [{cookieSession: []}]
       responses: {'201': {description: Created}}
+  /admin/password-resets:
+    post:
+      summary: Generate a 30-minute one-time password reset token for a member
+      security: [{cookieSession: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: {type: string, format: email, maxLength: 254}
+      responses:
+        '201': {description: Reset token returned once}
+        '404': {$ref: '#/components/responses/Problem'}
   /admin/collections/football-data:
     get:
       summary: Read connector configuration and latest collection status
@@ -264,6 +291,12 @@ components:
         password: {type: string, minLength: 12}
         nickname: {type: string, minLength: 2, maxLength: 40}
         invitationCode: {type: string}
+    PasswordReset:
+      type: object
+      required: [token, password]
+      properties:
+        token: {type: string, minLength: 20, maxLength: 200}
+        password: {type: string, minLength: 12, maxLength: 128}
     FirstInstall:
       type: object
       required: [token, email, password, nickname]
