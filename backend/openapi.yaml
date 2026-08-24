@@ -178,7 +178,7 @@ paths:
       security: [{cookieSession: []}]
       responses: {'200': {description: TV collection status}}
     post:
-      summary: Synchronize today through the next seven days of French TV listings
+      summary: Synchronize today through the next two calendar months of French TV listings
       security: [{cookieSession: []}]
       responses:
         '200': {description: TV collection completed}

@@ -39,6 +39,56 @@ func TestParseFootao(t *testing.T) {
 	}
 }
 
+func TestParseFootaoUsesSectionDateForFutureListings(t *testing.T) {
+	document, err := html.Parse(strings.NewReader(`<html><body><section>
+		<h2><a href="match-foot.php?v=vendredi-28-aout-2026&amp;jr=28&amp;ms=08&amp;an=2026">vendredi 28 août</a></h2>
+		<div><time>20:45</time>
+		<a><img class="im" alt="match Ligue 1+ foot programme soir"></a>
+		<a href="lille-psg-chaine-tv-diffusion-heure" class="rc"><span itemprop="name">Lille · Paris PSG</span></a>
+		<span class="ap"><a>Ligue 1</a></span></div>
+	</section></body></html>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	location, _ := time.LoadLocation("Europe/Paris")
+	from := time.Date(2026, 8, 24, 0, 0, 0, 0, location)
+	items := parseFootao(document, from, from.AddDate(0, 2, 0))
+	if len(items) != 1 {
+		t.Fatalf("expected future listing, got %d", len(items))
+	}
+	if got := items[0].StartsAt.In(location).Format("2006-01-02 15:04"); got != "2026-08-28 20:45" {
+		t.Fatalf("unexpected future start: %s", got)
+	}
+	if items[0].Channels[0] != "Ligue 1+" || items[0].HomeName != "Lille" || items[0].AwayName != "Paris PSG" {
+		t.Fatalf("unexpected future listing: %#v", items[0])
+	}
+
+	changed := strings.ReplaceAll(`<html><body><section>
+		<h2><a href="match-foot.php?v=vendredi-28-aout-2026&amp;jr=28&amp;ms=08&amp;an=2026">vendredi 28 août</a></h2>
+		<div><time>21:00</time><a><img class="im" alt="match Ligue 1+ foot programme soir"></a>
+		<a href="lille-psg-chaine-tv-diffusion-heure" class="rc"><span itemprop="name">Lille · Paris PSG</span></a></div>
+	</section></body></html>`, "\t", "")
+	changedDocument, err := html.Parse(strings.NewReader(changed))
+	if err != nil {
+		t.Fatal(err)
+	}
+	changedItems := parseFootao(changedDocument, from, from.AddDate(0, 2, 0))
+	if len(changedItems) != 1 || changedItems[0].SourceKey != items[0].SourceKey {
+		t.Fatal("a schedule change must retain the Footao source identity")
+	}
+}
+
+func TestCollectionWindowSpansTwoCalendarMonths(t *testing.T) {
+	location, _ := time.LoadLocation("Europe/Paris")
+	from, to := collectionWindow(time.Date(2026, 8, 24, 15, 30, 0, 0, location))
+	if got := from.Format("2006-01-02 15:04"); got != "2026-08-24 00:00" {
+		t.Fatalf("unexpected collection start: %s", got)
+	}
+	if got := to.Format("2006-01-02 15:04"); got != "2026-10-24 00:00" {
+		t.Fatalf("unexpected collection end: %s", got)
+	}
+}
+
 func TestChooseMatchRequiresBothTeams(t *testing.T) {
 	first := uuid.New()
 	second := uuid.New()
@@ -58,5 +108,8 @@ func TestNormalizeFrenchClubAliases(t *testing.T) {
 	}
 	if nameScore("La Corogne", "RC Deportivo La Coruña") < 2 {
 		t.Fatal("expected La Corogne to match Deportivo La Coruña")
+	}
+	if nameScore("Paris PSG", "Paris Saint-Germain FC") != 3 {
+		t.Fatal("expected Paris PSG to match Paris Saint-Germain FC")
 	}
 }

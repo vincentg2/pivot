@@ -105,7 +105,7 @@ func parseBroadcastDate(value string, fallback time.Time) (time.Time, error) {
 	return time.Parse("2006-01-02", value)
 }
 func invalidBroadcastDates() error {
-	return httpx.NewProblem(400, "Invalid date window", "Use YYYY-MM-DD dates spanning no more than 31 days.")
+	return httpx.NewProblem(400, "Invalid date window", "Use YYYY-MM-DD dates spanning no more than two months.")
 }
 func invalidListing() error {
 	return httpx.NewProblem(404, "TV listing unavailable", "The requested TV listing does not exist.")

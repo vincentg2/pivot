@@ -16,7 +16,7 @@ The French TV listing connector is centrally fetched by the backend, disabled by
 
 Suggested schedule: daily. Past TV listings are deleted the following day. TV-only matches outside the football catalog remain explicitly external and unenriched.
 
-Activation requires both `FOOTAO_ENABLED=true` and an operator-specific `FOOTAO_USER_AGENT`. The checked-in placeholder is intentionally rejected when the connector is enabled. A collection imports only today through the next seven days, stores normalized listing fields rather than raw HTML, and discards the response after parsing. Listings are linked to football-data.org matches only when kickoff time and both team names provide an unambiguous match. Administrators can correct or hide a listing; the effective correction survives later imports and every correction or restore creates an immutable audit entry.
+Activation requires both `FOOTAO_ENABLED=true` and an operator-specific `FOOTAO_USER_AGENT`. The checked-in placeholder is intentionally rejected when the connector is enabled. A collection imports today through the next two calendar months from one response, stores normalized listing fields rather than raw HTML, and discards the response after parsing. Listings are linked to football-data.org matches only when kickoff time and both team names provide an unambiguous match. Administrators can correct or hide a listing; the effective correction survives later imports and every correction or restore creates an immutable audit entry.
 
 ## Official club RSS
 

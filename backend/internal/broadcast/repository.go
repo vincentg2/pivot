@@ -70,10 +70,20 @@ func (r *PostgresRepository) Upsert(ctx context.Context, item ImportedListing, m
 	}
 	defer tx.Rollback(ctx)
 	var id uuid.UUID
-	err = tx.QueryRow(ctx, `INSERT INTO tv_listings(id,source,source_key,match_id,starts_at,home_name,away_name,label,competition_name,broadcast_kind,source_url)
-		VALUES($1,'footao',$2,$3,$4,$5,$6,$7,$8,$9,$10)
-		ON CONFLICT(source,source_key) DO UPDATE SET match_id=excluded.match_id,starts_at=excluded.starts_at,home_name=excluded.home_name,away_name=excluded.away_name,label=excluded.label,competition_name=excluded.competition_name,broadcast_kind=excluded.broadcast_kind,source_url=excluded.source_url,imported_at=now(),updated_at=now()
-		RETURNING id`, uuid.New(), item.SourceKey, matchID, item.StartsAt, item.HomeName, item.AwayName, item.Label, item.CompetitionName, item.Kind, item.SourceURL).Scan(&id)
+	if item.SourceURL != nil {
+		err = tx.QueryRow(ctx, `SELECT id FROM tv_listings WHERE source='footao' AND source_url=$1 ORDER BY imported_at DESC LIMIT 1 FOR UPDATE`, *item.SourceURL).Scan(&id)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return err
+		}
+	}
+	if id != uuid.Nil {
+		_, err = tx.Exec(ctx, `UPDATE tv_listings SET source_key=$2,match_id=$3,starts_at=$4,home_name=$5,away_name=$6,label=$7,competition_name=$8,broadcast_kind=$9,source_url=$10,imported_at=now(),updated_at=now() WHERE id=$1`, id, item.SourceKey, matchID, item.StartsAt, item.HomeName, item.AwayName, item.Label, item.CompetitionName, item.Kind, item.SourceURL)
+	} else {
+		err = tx.QueryRow(ctx, `INSERT INTO tv_listings(id,source,source_key,match_id,starts_at,home_name,away_name,label,competition_name,broadcast_kind,source_url)
+			VALUES($1,'footao',$2,$3,$4,$5,$6,$7,$8,$9,$10)
+			ON CONFLICT(source,source_key) DO UPDATE SET match_id=excluded.match_id,starts_at=excluded.starts_at,home_name=excluded.home_name,away_name=excluded.away_name,label=excluded.label,competition_name=excluded.competition_name,broadcast_kind=excluded.broadcast_kind,source_url=excluded.source_url,imported_at=now(),updated_at=now()
+			RETURNING id`, uuid.New(), item.SourceKey, matchID, item.StartsAt, item.HomeName, item.AwayName, item.Label, item.CompetitionName, item.Kind, item.SourceURL).Scan(&id)
+	}
 	if err != nil {
 		return err
 	}

@@ -29,6 +29,13 @@ function choose(start: Date, days: number) {
   to.value = localDate(addDays(start, days))
   void load()
 }
+function chooseTwoMonths() {
+  const end = new Date()
+  end.setMonth(end.getMonth() + 2)
+  from.value = localDate(new Date())
+  to.value = localDate(end)
+  void load()
+}
 function dateHeading(value: string) {
   return new Intl.DateTimeFormat('en-GB', {
     weekday: 'long',
@@ -53,6 +60,7 @@ onMounted(load)
       <button @click="choose(new Date(), 0)">Today</button>
       <button @click="choose(addDays(new Date(), 1), 0)">Tomorrow</button>
       <button @click="choose(new Date(), 7)">Next 7 days</button>
+      <button @click="chooseTwoMonths">Next 2 months</button>
     </section>
     <p v-if="loading" class="catalog-state">Loading the TV schedule…</p>
     <div v-else-if="grouped.length" class="broadcast-groups">

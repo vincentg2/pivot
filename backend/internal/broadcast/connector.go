@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -77,17 +78,18 @@ func parseFootao(document *html.Node, from, to time.Time) []ImportedListing {
 	location, _ := time.LoadLocation("Europe/Paris")
 	items := make([]ImportedListing, 0)
 	for _, section := range elements(document, "section") {
+		sectionDate := footaoSectionDate(section, location)
 		currentCompetition := ""
 		for child := section.FirstChild; child != nil; child = child.NextSibling {
 			if child.Type != html.ElementNode || child.Data != "div" {
 				continue
 			}
-			timeNode := firstElement(child, "time", func(n *html.Node) bool { return attr(n, "content") != "" })
+			timeNode := firstElement(child, "time", func(*html.Node) bool { return true })
 			matchNode := firstElement(child, "a", func(n *html.Node) bool { return hasClass(n, "rc") })
 			if timeNode == nil || matchNode == nil {
 				continue
 			}
-			startsAt, err := time.ParseInLocation("2006-01-02T15:04", attr(timeNode, "content"), location)
+			startsAt, err := footaoStartTime(timeNode, sectionDate, location)
 			if err != nil || startsAt.Before(startOfDay(from, location)) || startsAt.After(endOfDay(to, location)) {
 				continue
 			}
@@ -136,12 +138,54 @@ func parseFootao(document *html.Node, from, to time.Time) []ImportedListing {
 					}
 				}
 			}
-			keyMaterial := startsAt.Format(time.RFC3339) + "|" + href + "|" + label
+			keyMaterial := href
+			if keyMaterial == "" {
+				keyMaterial = label + "|" + currentCompetition
+			}
 			sum := sha256.Sum256([]byte(keyMaterial))
 			items = append(items, ImportedListing{SourceKey: hex.EncodeToString(sum[:]), StartsAt: startsAt, HomeName: home, AwayName: away, Label: label, CompetitionName: currentCompetition, Kind: kind, Channels: channels, SourceURL: sourceURL})
 		}
 	}
 	return items
+}
+
+func footaoSectionDate(section *html.Node, location *time.Location) time.Time {
+	link := firstElement(section, "a", func(n *html.Node) bool {
+		parsed, err := url.Parse(attr(n, "href"))
+		return err == nil && strings.HasSuffix(parsed.Path, "match-foot.php")
+	})
+	if link == nil {
+		return time.Time{}
+	}
+	parsed, err := url.Parse(attr(link, "href"))
+	if err != nil {
+		return time.Time{}
+	}
+	day, dayErr := strconv.Atoi(parsed.Query().Get("jr"))
+	month, monthErr := strconv.Atoi(parsed.Query().Get("ms"))
+	year, yearErr := strconv.Atoi(parsed.Query().Get("an"))
+	if dayErr != nil || monthErr != nil || yearErr != nil {
+		return time.Time{}
+	}
+	value, err := time.ParseInLocation("2006-1-2", fmt.Sprintf("%d-%d-%d", year, month, day), location)
+	if err != nil {
+		return time.Time{}
+	}
+	return value
+}
+
+func footaoStartTime(node *html.Node, sectionDate time.Time, location *time.Location) (time.Time, error) {
+	if content := strings.TrimSpace(attr(node, "content")); content != "" {
+		return time.ParseInLocation("2006-01-02T15:04", content, location)
+	}
+	if sectionDate.IsZero() {
+		return time.Time{}, fmt.Errorf("Footao listing has no date")
+	}
+	clock, err := time.ParseInLocation("15:04", cleanText(textContent(node)), location)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return time.Date(sectionDate.Year(), sectionDate.Month(), sectionDate.Day(), clock.Hour(), clock.Minute(), 0, 0, location), nil
 }
 
 func elements(root *html.Node, name string) []*html.Node {
@@ -254,9 +298,12 @@ func normalizeName(value string) string {
 		return -1
 	}, value)
 	aliases := map[string]string{
-		"bologne":    "bologna",
-		"lacorogne":  "deportivolacoruna",
-		"intermilan": "internazionale",
+		"bologne":             "bologna",
+		"lacorogne":           "deportivolacoruna",
+		"intermilan":          "internazionale",
+		"parispsg":            "psg",
+		"parissaintgermain":   "psg",
+		"parissaintgermainfc": "psg",
 	}
 	if alias, ok := aliases[normalized]; ok {
 		return alias

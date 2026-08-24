@@ -18,7 +18,7 @@ func NewService(repo Repository, connector Connector) *Service {
 }
 
 func (s *Service) List(ctx context.Context, from, to time.Time, includeHidden bool) ([]Listing, error) {
-	if to.Before(from) || to.Sub(from) > 31*24*time.Hour {
+	if to.Before(from) || to.After(from.AddDate(0, 2, 0)) {
 		return nil, ErrInvalidWindow
 	}
 	return s.repo.List(ctx, from, to, includeHidden)
@@ -35,10 +35,7 @@ func (s *Service) Sync(ctx context.Context, now time.Time) (CollectionRun, error
 	if err != nil {
 		return CollectionRun{}, err
 	}
-	location, _ := time.LoadLocation("Europe/Paris")
-	localNow := now.In(location)
-	from := time.Date(localNow.Year(), localNow.Month(), localNow.Day(), 0, 0, 0, 0, location)
-	to := from.AddDate(0, 0, 7)
+	from, to := collectionWindow(now)
 	if _, err = s.repo.CleanupPast(ctx, now); err != nil {
 		return CollectionRun{}, s.fail(ctx, run.ID, 0, err)
 	}
@@ -62,6 +59,13 @@ func (s *Service) Sync(ctx context.Context, now time.Time) (CollectionRun, error
 	run.Status = "succeeded"
 	run.RecordsCount = len(items)
 	return run, nil
+}
+
+func collectionWindow(now time.Time) (time.Time, time.Time) {
+	location, _ := time.LoadLocation("Europe/Paris")
+	localNow := now.In(location)
+	from := time.Date(localNow.Year(), localNow.Month(), localNow.Day(), 0, 0, 0, 0, location)
+	return from, from.AddDate(0, 2, 0)
 }
 func (s *Service) Correct(ctx context.Context, listingID, adminID uuid.UUID, input CorrectionInput) error {
 	input.Label = strings.TrimSpace(input.Label)
