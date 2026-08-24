@@ -424,7 +424,11 @@ small {
   border-radius: 20px;
   border: 1px solid var(--line);
   background:
-    radial-gradient(circle at 92% 4%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 22rem),
+    radial-gradient(
+      circle at 92% 4%,
+      color-mix(in srgb, var(--accent) 10%, transparent),
+      transparent 22rem
+    ),
     var(--paper-raised);
   color: var(--ink);
   box-shadow: var(--shadow-tight);
