@@ -1,21 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import {
-  ArrowRight,
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  Newspaper,
-  Radio,
-  Trophy,
-} from 'lucide-vue-next'
+import { ArrowRight, CalendarDays, ChevronDown, Newspaper, Radio, Trophy } from 'lucide-vue-next'
 import AvatarMonogram from '@/components/AvatarMonogram.vue'
 import ClubMark from '@/components/ClubMark.vue'
 import MatchRow from '@/components/MatchRow.vue'
 import NewsCard from '@/components/NewsCard.vue'
 import { api } from '@/lib/api'
 import { broadcastChannelsByMatch, type BroadcastListing } from '@/lib/broadcast'
-import { favoriteMatchesWithin, pageItems } from '@/lib/dashboard'
+import { favoriteMatchesWithin, matchesForClub } from '@/lib/dashboard'
 import { addDays, localDate, type FootballMatch } from '@/lib/football'
 import { useSessionStore } from '@/stores/session'
 import { useFavoritesStore } from '@/stores/favorites'
@@ -26,22 +18,16 @@ const loadedMatches = ref<FootballMatch[]>([])
 const broadcasts = ref<BroadcastListing[]>([])
 const news = ref<NewsItem[]>([])
 const horizonDays = ref<14 | 30>(14)
-const matchPage = ref(0)
-const matchPageSize = 5
+const selectedClubId = ref<string | null>(null)
+const visibleMatchCount = ref(8)
+const matchBatchSize = 8
 const channelsByMatch = computed(() => broadcastChannelsByMatch(broadcasts.value))
 const matchesInHorizon = computed(() =>
   favoriteMatchesWithin(loadedMatches.value, new Date(), horizonDays.value),
 )
-const matchPageCount = computed(() =>
-  Math.max(1, Math.ceil(matchesInHorizon.value.length / matchPageSize)),
-)
-const favoriteMatches = computed(() =>
-  pageItems(matchesInHorizon.value, matchPage.value, matchPageSize),
-)
-const matchRangeStart = computed(() => matchPage.value * matchPageSize + 1)
-const matchRangeEnd = computed(() =>
-  Math.min((matchPage.value + 1) * matchPageSize, matchesInHorizon.value.length),
-)
+const filteredMatches = computed(() => matchesForClub(matchesInHorizon.value, selectedClubId.value))
+const favoriteMatches = computed(() => filteredMatches.value.slice(0, visibleMatchCount.value))
+const hasMoreMatches = computed(() => visibleMatchCount.value < filteredMatches.value.length)
 const matchHeading = computed(() =>
   horizonDays.value === 14 ? 'The next two weeks' : 'The month ahead',
 )
@@ -63,10 +49,7 @@ onMounted(async () => {
   broadcasts.value = broadcastResponse.listings
   news.value = newsResponse.news
 })
-watch(horizonDays, () => (matchPage.value = 0))
-watch(matchPageCount, (count) => {
-  if (matchPage.value >= count) matchPage.value = count - 1
-})
+watch([horizonDays, selectedClubId], () => (visibleMatchCount.value = matchBatchSize))
 </script>
 
 <template>
@@ -124,6 +107,27 @@ watch(matchPageCount, (count) => {
           <RouterLink to="/matches" class="text-link">All matches</RouterLink>
         </div>
       </div>
+      <div class="favorite-club-filters" role="group" aria-label="Filter matches by favorite club">
+        <button
+          type="button"
+          :class="{ active: selectedClubId === null }"
+          :aria-pressed="selectedClubId === null"
+          @click="selectedClubId = null"
+        >
+          All clubs
+        </button>
+        <button
+          v-for="club in favorites.clubs"
+          :key="club.id"
+          type="button"
+          :class="{ active: selectedClubId === club.id }"
+          :aria-pressed="selectedClubId === club.id"
+          @click="selectedClubId = club.id"
+        >
+          <ClubMark :name="club.name" :tla="club.tla" :crest-url="club.crestUrl" />
+          {{ club.shortName || club.name }}
+        </button>
+      </div>
       <div v-if="favoriteMatches.length" class="compact-matches">
         <MatchRow
           v-for="(match, index) in favoriteMatches"
@@ -134,33 +138,14 @@ watch(matchPageCount, (count) => {
         />
       </div>
       <p v-else class="quiet dashboard-empty-line">
-        No matches synchronized for your favorites in this period.
+        No matches synchronized for this selection in this period.
       </p>
-      <nav
-        v-if="matchesInHorizon.length > matchPageSize"
-        class="dashboard-match-pagination"
-        aria-label="Favorite match pages"
-      >
-        <button
-          type="button"
-          :disabled="matchPage === 0"
-          aria-label="Previous favorite matches"
-          @click="matchPage--"
-        >
-          <ChevronLeft :size="17" /> Previous
+      <div v-if="hasMoreMatches" class="dashboard-match-more">
+        <button type="button" class="button secondary" @click="visibleMatchCount += matchBatchSize">
+          Show next matches <ChevronDown :size="17" />
         </button>
-        <span aria-live="polite"
-          >{{ matchRangeStart }}–{{ matchRangeEnd }} of {{ matchesInHorizon.length }}</span
-        >
-        <button
-          type="button"
-          :disabled="matchPage + 1 >= matchPageCount"
-          aria-label="Next favorite matches"
-          @click="matchPage++"
-        >
-          Next <ChevronRight :size="17" />
-        </button>
-      </nav>
+        <span aria-live="polite">{{ favoriteMatches.length }} of {{ filteredMatches.length }}</span>
+      </div>
     </section>
     <section v-if="favorites.ready && favorites.clubs.length" class="favorite-dashboard">
       <div class="section-heading">

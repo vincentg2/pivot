@@ -17,7 +17,7 @@ export function favoriteMatchesWithin(
     .sort((left, right) => Date.parse(left.utcDate) - Date.parse(right.utcDate))
 }
 
-export function pageItems<T>(items: T[], page: number, pageSize: number): T[] {
-  const start = Math.max(0, page) * pageSize
-  return items.slice(start, start + pageSize)
+export function matchesForClub(matches: FootballMatch[], clubId: string | null): FootballMatch[] {
+  if (!clubId) return matches
+  return matches.filter((match) => match.home.id === clubId || match.away.id === clubId)
 }

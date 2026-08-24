@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { favoriteMatchesWithin, pageItems } from './dashboard'
+import { favoriteMatchesWithin, matchesForClub } from './dashboard'
 import type { FootballMatch } from './football'
 
 function match(id: string, day: number, favorite = true): FootballMatch {
@@ -31,7 +31,16 @@ describe('dashboard match window', () => {
     expect(favoriteMatchesWithin(matches, now, 7).map((item) => item.id)).toEqual(['soon', 'later'])
   })
 
-  it('paginates a match collection', () => {
-    expect(pageItems([1, 2, 3, 4, 5, 6], 1, 5)).toEqual([6])
+  it('filters the collection for one favorite club', () => {
+    const homeMatch = match('home-match', 25)
+    const awayMatch = match('away-match', 26)
+    const unrelated = match('unrelated', 27)
+    homeMatch.home.id = 'favorite'
+    awayMatch.away.id = 'favorite'
+
+    expect(
+      matchesForClub([homeMatch, unrelated, awayMatch], 'favorite').map((item) => item.id),
+    ).toEqual(['home-match', 'away-match'])
+    expect(matchesForClub([homeMatch, unrelated], null)).toHaveLength(2)
   })
 })
