@@ -16,7 +16,7 @@ func main() {
 	if err != nil {
 		fail(err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 	pool, err := database.Open(ctx, cfg.DatabaseURL)
 	if err != nil {
