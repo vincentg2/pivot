@@ -3,7 +3,7 @@ services:
     name: pivot
     runtime: docker
     region: frankfurt
-    plan: starter
+    plan: free
     dockerfilePath: ./backend/Dockerfile
     dockerContext: .
     healthCheckPath: /health
