@@ -69,7 +69,7 @@ func main() {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 	})
 	api := e.Group("/api/v1")
-	loginLimiter := middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(float64(cfg.LoginRateLimit) / 60)))
+	loginLimiter := middleware.RateLimiter(newLoginRateLimiter(cfg.LoginRateLimit))
 	api.POST("/auth/register", authHandler.Register)
 	api.POST("/auth/login", authHandler.Login, loginLimiter)
 	api.POST("/auth/logout", authHandler.Logout)
@@ -94,4 +94,11 @@ func main() {
 	if err := e.Shutdown(shutdownCtx); err != nil {
 		logger.Error("shutdown failed", "error", err)
 	}
+}
+
+func newLoginRateLimiter(requestsPerMinute int) middleware.RateLimiterStore {
+	return middleware.NewRateLimiterMemoryStoreWithConfig(middleware.RateLimiterMemoryStoreConfig{
+		Rate:  rate.Limit(float64(requestsPerMinute) / 60),
+		Burst: requestsPerMinute,
+	})
 }
