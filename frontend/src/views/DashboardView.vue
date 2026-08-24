@@ -5,9 +5,10 @@ import AvatarMonogram from '@/components/AvatarMonogram.vue'
 import ClubMark from '@/components/ClubMark.vue'
 import MatchRow from '@/components/MatchRow.vue'
 import NewsCard from '@/components/NewsCard.vue'
+import RecentResult from '@/components/RecentResult.vue'
 import { api } from '@/lib/api'
 import { broadcastChannelsByMatch, type BroadcastListing } from '@/lib/broadcast'
-import { favoriteMatchesWithin, matchesForClub } from '@/lib/dashboard'
+import { favoriteMatchesWithin, latestFavoriteResults, matchesForClub } from '@/lib/dashboard'
 import { addDays, localDate, type FootballMatch } from '@/lib/football'
 import { useSessionStore } from '@/stores/session'
 import { useFavoritesStore } from '@/stores/favorites'
@@ -15,6 +16,7 @@ import type { NewsItem } from '@/lib/news'
 const session = useSessionStore()
 const favorites = useFavoritesStore()
 const loadedMatches = ref<FootballMatch[]>([])
+const recentMatches = ref<FootballMatch[]>([])
 const broadcasts = ref<BroadcastListing[]>([])
 const news = ref<NewsItem[]>([])
 const selectedClubId = ref<string | null>(null)
@@ -24,6 +26,7 @@ const channelsByMatch = computed(() => broadcastChannelsByMatch(broadcasts.value
 const matchesInHorizon = computed(() => favoriteMatchesWithin(loadedMatches.value, new Date(), 30))
 const filteredMatches = computed(() => matchesForClub(matchesInHorizon.value, selectedClubId.value))
 const favoriteMatches = computed(() => filteredMatches.value.slice(0, visibleMatchCount.value))
+const recentResults = computed(() => latestFavoriteResults(recentMatches.value))
 const hasMoreMatches = computed(() => visibleMatchCount.value < filteredMatches.value.length)
 const todayLabel = computed(() =>
   new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(
@@ -34,12 +37,16 @@ onMounted(async () => {
   if (!favorites.ready) await favorites.load()
   const from = localDate(new Date())
   const to = localDate(addDays(new Date(), 30))
-  const [matchResponse, broadcastResponse, newsResponse] = await Promise.all([
+  const recentFrom = localDate(addDays(new Date(), -30))
+  const recentTo = localDate(addDays(new Date(), -1))
+  const [matchResponse, recentResponse, broadcastResponse, newsResponse] = await Promise.all([
     api<{ matches: FootballMatch[] }>(`/matches?from=${from}&to=${to}`),
+    api<{ matches: FootballMatch[] }>(`/matches?from=${recentFrom}&to=${recentTo}`),
     api<{ listings: BroadcastListing[] }>(`/broadcasts?from=${from}&to=${to}`),
     api<{ news: NewsItem[] }>('/news?limit=6'),
   ])
   loadedMatches.value = matchResponse.matches
+  recentMatches.value = recentResponse.matches
   broadcasts.value = broadcastResponse.listings
   news.value = newsResponse.news
 })
@@ -59,6 +66,12 @@ watch(selectedClubId, () => (visibleMatchCount.value = matchBatchSize))
         :seed="session.user.avatarSeed"
         size="lg"
       />
+      <div v-if="recentResults.length" class="recent-results">
+        <p>Last results</p>
+        <div class="recent-results-list">
+          <RecentResult v-for="match in recentResults" :key="match.id" :match="match" />
+        </div>
+      </div>
     </section>
     <section v-if="news.length" class="dashboard-news">
       <div class="section-heading">

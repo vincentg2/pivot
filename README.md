@@ -36,7 +36,7 @@ Administrators can issue a one-time password reset link from the administration 
 
 The application works with an empty catalog and no provider key. To populate the five major European leagues, set `FOOTBALL_DATA_API_KEY` in `.env`, restart the API, then use **Admin → Data collection → Run now**. Remote club and broadcaster marks remain off unless the operator explicitly sets `VITE_REMOTE_LOGOS_ENABLED=true`; images are requested from allowlisted providers and never distributed with Pivot.
 
-After the club catalog is populated, run **Admin → Sports collection → Run sports data** or `just collect-sport`. The importer deliberately paces provider requests, stores yesterday through the next 30 days, refreshes current standings, and preserves previously encountered seasons and matches.
+After the club catalog is populated, run **Admin → Sports collection → Run sports data** or `just collect-sport`. The importer deliberately paces provider requests, stores the previous and next 30 days, refreshes current standings, and preserves previously encountered seasons and matches.
 
 The Footao connector is a separate, explicit opt-in. Only enable it when the operator has permission: set `FOOTAO_ENABLED=true` and replace the placeholder `FOOTAO_USER_AGENT` with an identifiable contact URL, restart the API, migrate, then use **Admin → Television collection → Run TV data** or `just collect-tv`. Pivot performs one central server-side fetch with bounded retries, imports a two-month schedule window, and never contacts Footao from browsers. Manual listing corrections and restores are recorded in the admin audit trail.
 

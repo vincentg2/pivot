@@ -21,3 +21,10 @@ export function matchesForClub(matches: FootballMatch[], clubId: string | null):
   if (!clubId) return matches
   return matches.filter((match) => match.home.id === clubId || match.away.id === clubId)
 }
+
+export function latestFavoriteResults(matches: FootballMatch[], limit = 3): FootballMatch[] {
+  return matches
+    .filter((match) => match.favorite && match.status === 'FINISHED')
+    .sort((left, right) => Date.parse(right.utcDate) - Date.parse(left.utcDate))
+    .slice(0, limit)
+}

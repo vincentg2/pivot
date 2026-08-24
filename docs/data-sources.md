@@ -10,7 +10,7 @@ The same operator setting enables an allowlisted set of remote broadcaster marks
 
 Suggested schedule: club catalog weekly; fixtures and standings four times daily. Past seasons are retained.
 
-The sports collector fetches yesterday through the next 30 days and the current total standings for the five major leagues. Requests are paced for conservative free-plan usage. Repeated runs upsert matches and tables while leaving older seasons intact.
+The sports collector fetches the previous and next 30 days plus the current total standings for the five major leagues. Requests are paced for conservative free-plan usage. Repeated runs upsert matches and tables while leaving older seasons intact.
 
 ## Footao
 

@@ -184,9 +184,7 @@ onMounted(() => {
       <div>
         <p class="eyebrow">Sports collection</p>
         <h2>Matches & standings</h2>
-        <p class="quiet">
-          Refreshes yesterday through the next 30 days for the five major leagues.
-        </p>
+        <p class="quiet">Refreshes the previous and next 30 days for the five major leagues.</p>
         <p v-if="sportCollection?.latestRun" class="collection-status">
           <span class="status">{{ sportCollection.latestRun.status }}</span>
           {{ sportCollection.latestRun.recordsCount }} records ·

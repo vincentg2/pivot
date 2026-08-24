@@ -386,11 +386,11 @@ small {
   padding-block: clamp(40px, 7vw, 84px);
 }
 .welcome-row {
-  display: flex;
+  display: grid;
   min-height: 300px;
   padding: clamp(28px, 5vw, 64px);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 2rem;
   border-radius: 20px;
   background:
@@ -414,6 +414,81 @@ small {
   color: rgb(255 255 255 / 0.72);
   font-size: 0.85rem;
   font-weight: 650;
+}
+.recent-results {
+  display: grid;
+  min-width: 0;
+  padding-top: 1rem;
+  grid-column: 1 / -1;
+  align-self: end;
+  gap: 0.7rem;
+  border-top: 1px solid rgb(255 255 255 / 0.24);
+}
+.recent-results > p {
+  margin: 0;
+  color: rgb(255 255 255 / 0.68);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.recent-results-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.recent-result {
+  min-width: 0;
+  padding-inline: 1rem;
+  border-left: 1px solid rgb(255 255 255 / 0.18);
+}
+.recent-result:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+.recent-result:last-child {
+  padding-right: 0;
+}
+.recent-result time {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: rgb(255 255 255 / 0.62);
+  font-size: 0.65rem;
+  font-weight: 650;
+}
+.recent-scoreline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+}
+.recent-scoreline > strong {
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+.recent-team {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgb(255 255 255 / 0.68);
+  font-size: 0.72rem;
+}
+.recent-team:last-child {
+  justify-content: flex-end;
+  text-align: right;
+}
+.recent-team > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.recent-team.winner {
+  color: white;
+  font-weight: 750;
+}
+.recent-result .club-mark {
+  width: 30px;
+  height: 30px;
+  border-color: rgb(255 255 255 / 0.22);
+  background: rgb(255 255 255 / 0.94);
 }
 .avatar {
   display: inline-grid;
@@ -1622,6 +1697,26 @@ small {
   }
   .welcome-row .avatar {
     display: none;
+  }
+  .welcome-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .recent-results-list {
+    grid-template-columns: none;
+    grid-auto-columns: minmax(250px, 88%);
+    grid-auto-flow: column;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+  .recent-results-list::-webkit-scrollbar {
+    display: none;
+  }
+  .recent-result {
+    padding-inline: 0 1rem;
+    border-left: 0;
+    border-right: 1px solid rgb(255 255 255 / 0.18);
+    scroll-snap-align: start;
   }
   .empty-hero {
     margin-top: 3rem;

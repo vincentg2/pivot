@@ -69,7 +69,7 @@ func (s *Service) Sync(ctx context.Context, now time.Time) (CollectionRun, error
 }
 
 func sportCollectionWindow(now time.Time) (time.Time, time.Time) {
-	return now.AddDate(0, 0, -1), now.AddDate(0, 0, 30)
+	return now.AddDate(0, 0, -30), now.AddDate(0, 0, 30)
 }
 func (s *Service) fail(ctx context.Context, id uuid.UUID, count int, cause error) error {
 	_ = s.repo.FinishCollection(ctx, id, "failed", count, "Provider synchronization failed; consult structured server logs.")

@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { favoriteMatchesWithin, matchesForClub } from './dashboard'
+import { favoriteMatchesWithin, latestFavoriteResults, matchesForClub } from './dashboard'
 import type { FootballMatch } from './football'
 
-function match(id: string, day: number, favorite = true): FootballMatch {
+function match(id: string, day: number, favorite = true, status = 'TIMED'): FootballMatch {
   return {
     id,
     utcDate: `2026-08-${String(day).padStart(2, '0')}T18:00:00Z`,
-    status: 'TIMED',
+    status,
     stage: '',
     matchday: 1,
     homeScore: null,
@@ -29,6 +29,17 @@ describe('dashboard match window', () => {
     ]
 
     expect(favoriteMatchesWithin(matches, now, 7).map((item) => item.id)).toEqual(['soon', 'later'])
+  })
+
+  it('returns the latest finished matches for favorite clubs', () => {
+    const matches = [
+      match('older', 10, true, 'FINISHED'),
+      match('upcoming', 28),
+      match('latest', 20, true, 'FINISHED'),
+      match('not-favorite', 22, false, 'FINISHED'),
+    ]
+
+    expect(latestFavoriteResults(matches, 2).map((item) => item.id)).toEqual(['latest', 'older'])
   })
 
   it('filters the collection for one favorite club', () => {

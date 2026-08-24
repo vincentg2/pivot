@@ -25,7 +25,7 @@ func TestSyncRequiresConnector(t *testing.T) {
 func TestSportCollectionWindowIncludesNextMonth(t *testing.T) {
 	now := time.Date(2026, 8, 24, 12, 0, 0, 0, time.UTC)
 	from, to := sportCollectionWindow(now)
-	if from.Format("2006-01-02") != "2026-08-23" || to.Format("2006-01-02") != "2026-09-23" {
+	if from.Format("2006-01-02") != "2026-07-25" || to.Format("2006-01-02") != "2026-09-23" {
 		t.Fatalf("unexpected sports window: %s to %s", from, to)
 	}
 }
