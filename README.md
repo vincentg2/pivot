@@ -1,22 +1,56 @@
-# Pivot
+<p align="center">
+  <img src="frontend/public/pivot-mark.svg" width="72" height="72" alt="Pivot logo">
+</p>
 
-Pivot is a private, invitation-only football dashboard for friends and a self-hostable open-source portfolio project. It combines favorite clubs, fixtures, results, standings, French TV listings, and official club news in a calm editorial interface.
+<h1 align="center">Pivot</h1>
 
-> **Français :** Pivot est un tableau de bord football privé et responsive, accessible sur invitation. Le projet est auto-hébergeable ; les connecteurs de données restent optionnels et chaque opérateur fournit ses propres accès.
+<p align="center">
+  A private football dashboard for the clubs you actually follow.
+</p>
 
-## Milestones 1–5
+<p align="center">
+  <a href="https://github.com/vincentg2/pivot/actions/workflows/ci.yml"><img src="https://github.com/vincentg2/pivot/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2457ff.svg" alt="MIT license"></a>
+</p>
 
-The foundation includes the Vue/Go monorepo, responsive theme system, PostgreSQL, opaque cookie sessions, invitation registration, profiles, account deletion, administration, tests, CI, and development tooling. The product includes a local club catalog, five synchronized favorites, fixtures, results, standings, French TV listings, official club headlines, and operator-controlled collections. TV-only matches remain visibly external, while cautious matching enriches recognized catalog fixtures.
+Pivot brings fixtures, results, standings, French TV listings, and official club news into one responsive, invitation-only experience. It is designed for a small private community first and packaged as a self-hostable MIT-licensed project.
 
-## Architecture
+> **Résumé français —** Pivot est un tableau de bord football privé et responsive. Il rassemble les clubs favoris, matchs, résultats, classements, diffusions françaises et actualités officielles. L'inscription se fait sur invitation et le projet peut être auto-hébergé.
 
-- `frontend/`: Vue 3, TypeScript, Vite, Tailwind CSS v4, Reka UI, Lucide Vue, and Pinia for session/favorites only.
-- `backend/`: Go, Echo v4, pgx, Goose migrations, validator, structured logging, and domain-oriented handler/service/repository packages.
-- PostgreSQL is the only stateful dependency. Go and Vue run locally during development.
+## What Pivot includes
 
-## Developer setup
+- An invitation-only account system with opaque database sessions, secure cookies, roles, password recovery, and account deletion.
+- Personal profiles with synchronized light, dark, and system themes, plus up to five favorite clubs.
+- A month-ahead dashboard with favorite-club filters, recent results, team marks, and TV channels when announced.
+- Club pages, fixtures, results, national standings, and date-based match navigation.
+- French broadcast listings with channel marks, cautious fixture matching, admin corrections, and an audit trail.
+- Configurable official RSS and Atom feeds that retain headline metadata only.
+- French by default, with a complete English interface.
+- Administration for invitations, collectors, news sources, TV corrections, and one-time password-reset links.
 
-Requirements: Go 1.24+, Node 20+, pnpm, Just, and Docker Compose.
+Pivot remains useful without any third-party key: the application starts with an empty catalog and every connector is an explicit operator choice.
+
+## Stack
+
+```text
+frontend/   Vue 3 · TypeScript · Vite · Tailwind CSS 4 · Reka UI · Pinia
+backend/    Go · Echo 4 · pgx · Goose · PostgreSQL · structured slog
+platform/   Docker Compose locally · Render + Neon reference deployment
+```
+
+The backend is organized by domain using `handler → service → repository`. The frontend keeps shared state deliberately small: Pinia is limited to session and favorites. API failures use RFC 7807 problem details, and sessions are opaque, hashed, and stored in PostgreSQL.
+
+## Quick start
+
+### Requirements
+
+- Go 1.24+
+- Node.js 20+
+- pnpm
+- Just
+- Docker with Compose
+
+### Local development
 
 ```sh
 cp .env.example .env
@@ -28,42 +62,67 @@ just seed-demo
 just dev
 ```
 
-The frontend runs at `http://localhost:5173` and proxies `/api` to the backend at `http://localhost:8080`. Demo seeding prints a one-time invitation code. Production credentials are never generated or committed.
+Open [http://localhost:5173](http://localhost:5173). Vite proxies `/api` to the Go API at `http://localhost:8080`; PostgreSQL is the only service running in Docker. Demo seeding prints a one-time invitation code.
 
-Run all checks with `just check`. Create an admin interactively with `just create-admin email@example.com nickname`.
+Useful commands:
 
-Administrators can issue a one-time password reset link from the administration page. Links expire after 30 minutes, are stored only as hashes, and revoke all existing sessions when consumed.
-
-The application works with an empty catalog and no provider key. To populate the five major European leagues, set `FOOTBALL_DATA_API_KEY` in `.env`, restart the API, then use **Admin → Data collection → Run now**. Remote club and broadcaster marks remain off unless the operator explicitly sets `VITE_REMOTE_LOGOS_ENABLED=true`; images are requested from allowlisted providers and never distributed with Pivot.
-
-After the club catalog is populated, run **Admin → Sports collection → Run sports data** or `just collect-sport`. The importer deliberately paces provider requests, stores the previous and next 30 days, refreshes current standings, and preserves previously encountered seasons and matches.
-
-The Footao connector is a separate, explicit opt-in. Only enable it when the operator has permission: set `FOOTAO_ENABLED=true` and replace the placeholder `FOOTAO_USER_AGENT` with an identifiable contact URL, restart the API, migrate, then use **Admin → Television collection → Run TV data** or `just collect-tv`. Pivot performs one central server-side fetch with bounded retries, imports a two-month schedule window, and never contacts Footao from browsers. Manual listing corrections and restores are recorded in the admin audit trail.
-
-Official club news is configured per club under **Admin → Official news**. Pivot accepts public RSS and Atom URLs, blocks private-network fetches, and stores only titles, source names, publication dates, and canonical links for 30 days. Run `just collect-news` or enable the opt-in scheduled workflow described in [deployment documentation](docs/deployment.md).
+```sh
+just check                              # lint, unit tests, builds
+just create-admin email@example.com me # create an administrator
+just collect-catalog                    # clubs and competitions
+just collect-sport                      # matches and standings
+just collect-tv                         # French TV listings
+just collect-news                       # official club headlines
+```
 
 ## First installation
 
-On an empty database, Pivot redirects to `/setup`. Set a secret `SETUP_TOKEN` of at least 20 characters before starting the API, enter it once in the web assistant, and create the first administrator. The route locks permanently as soon as any user exists. Existing installations are unaffected, and `just create-admin` remains available for operator recovery.
+On an empty database, Pivot redirects to `/setup`.
 
-## Self-hosting with Docker Compose
+1. Generate a random `SETUP_TOKEN` of at least 20 characters.
+2. Add it to the runtime environment before starting Pivot.
+3. Open `/setup`, enter the token, and create the first administrator.
+4. Remove `SETUP_TOKEN` from the runtime environment after setup.
 
-The default `docker-compose.yml` still runs PostgreSQL only for local development. For a complete installation, copy `.env.example` to `.env`, replace `POSTGRES_PASSWORD` and `SETUP_TOKEN`, then run:
+The setup route locks permanently once a user exists. `just create-admin` remains available as an operator recovery path.
+
+## Data connectors
+
+| Source | Provides | Default | Operator responsibility |
+| --- | --- | --- | --- |
+| [football-data.org](https://www.football-data.org/) | Clubs, fixtures, results, standings | Disabled without a key | Supply `FOOTBALL_DATA_API_KEY` and keep attribution visible |
+| Footao | French TV listings | Disabled | Enable only with permission and an identifiable User-Agent |
+| Official club RSS/Atom | Headline, source, date, link | No feeds configured | Add public official feeds in the admin interface |
+| Remote provider images | Club and channel marks | Disabled | Set `VITE_REMOTE_LOGOS_ENABLED=true`; images are never distributed with Pivot |
+
+Footao is fetched centrally by the server—never by a member's browser—with bounded retries and a two-month window. Past TV data is removed the following day. Official-news collection blocks private-network targets and keeps metadata for 30 days.
+
+See [Data sources and retention](docs/data-sources.md) and [Third-party notices](THIRD_PARTY_NOTICES.md) before enabling any connector. The MIT license covers Pivot's code only, not third-party data, names, or images.
+
+## Self-hosting
+
+For a complete local installation, copy `.env.example`, replace `POSTGRES_PASSWORD` and `SETUP_TOKEN`, then run:
 
 ```sh
 docker compose -f compose.selfhosted.yml up --build -d
+docker compose -f compose.selfhosted.yml logs -f api
 ```
 
-Open `http://localhost:3000/setup`. Use TLS and `SESSION_SECURE=true` outside localhost. The API container applies Goose migrations before starting. See [deployment documentation](docs/deployment.md) for backups, Neon, Render, and scheduled collections.
+Open [http://localhost:3000/setup](http://localhost:3000/setup). Use TLS and `SESSION_SECURE=true` outside localhost. The API container applies Goose migrations before it starts.
 
-## Render V1
+The reference hosted setup uses one Render web service for Vue and Go, plus Neon PostgreSQL. Scheduled GitHub Actions collect news hourly, sports data every six hours, TV listings daily, and the club catalog weekly when explicitly enabled by the operator.
 
-The production Blueprint builds Vue and Go into one Render web service so the application, API, and session cookie share a single origin. The intended service URL is `https://pivot.onrender.com`; a custom domain can be attached later. Neon provides the external PostgreSQL database with separate pooled application and direct migration connection strings. Follow the secret-safe checklist in [deployment documentation](docs/deployment.md).
+Read [Deployment and operations](docs/deployment.md) for production secrets, pooled and direct database URLs, backups, health checks, and scheduled collectors.
 
-## Data and licensing
+## Repository guide
 
-Pivot works without data-provider keys. Read [data source policy](docs/data-sources.md) and [third-party notices](THIRD_PARTY_NOTICES.md) before enabling connectors. The code is MIT licensed; third-party data, names, and images are not.
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Deployment and operations](docs/deployment.md)
+- [Data sources and retention](docs/data-sources.md)
+- [Third-party notices](THIRD_PARTY_NOTICES.md)
+- [MIT license](LICENSE)
 
-## Status
+## Project status
 
-Milestone 5 of 5. The repository remains private until the owner explicitly decides to publish it. GHCR publication intentionally starts only when the owner requests the first public release.
+The five initial product milestones are implemented. The repository stays private until its owner explicitly requests the first public release; GHCR image publishing will begin with that release.
