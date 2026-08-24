@@ -125,6 +125,6 @@ Read [Deployment and operations](docs/deployment.md) for production secrets, poo
 
 ## Project status
 
-Pivot V1's five initial product milestones are implemented, and the repository is ready for its first public release. The hosted application remains invitation-only: making the source public does not expose user accounts, runtime data, or deployment secrets.
+Pivot V1's five initial product milestones are implemented and the source is publicly available under the MIT license. Version tags publish multi-architecture images with an SBOM and signed provenance to `ghcr.io/vincentg2/pivot`. The hosted application remains invitation-only: publishing the source does not expose user accounts, runtime data, or deployment secrets.
 
 Issues and focused pull requests are welcome. Please read the [contribution guide](CONTRIBUTING.md) before proposing a change, and report vulnerabilities privately according to the [security policy](SECURITY.md).

@@ -1,6 +1,6 @@
 # Deployment and operations
 
-Pivot remains private by default. Deploying it does not authorize a public repository, third-party data redistribution, or Footao collection.
+Pivot's source code is public under the MIT license, while every deployed application remains private and invitation-only by default. Publishing or deploying the code does not authorize third-party data redistribution or Footao collection.
 
 ## Production environment
 
@@ -61,4 +61,11 @@ The workflow runs server-side Go commands and never contacts providers from a me
 
 ## Release images
 
-No GHCR publishing workflow is enabled while the repository is private. Add signed, versioned image publication only when the owner explicitly requests the first public release.
+Pushing a semantic version tag such as `v1.0.0` runs `.github/workflows/release.yml`. The workflow builds the combined Vue and Go image for AMD64 and ARM64, publishes version and commit tags to `ghcr.io/vincentg2/pivot`, generates an SBOM, and attaches signed build provenance. Remote provider images stay disabled in the distributed image.
+
+```sh
+docker pull ghcr.io/vincentg2/pivot:1.0.0
+gh attestation verify oci://ghcr.io/vincentg2/pivot:1.0.0 -R vincentg2/pivot
+```
+
+The GitHub package may need to be made public once after its first publication. Do not publish `latest` from an unversioned branch build, and never inject runtime credentials as Docker build arguments.
