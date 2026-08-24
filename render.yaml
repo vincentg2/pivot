@@ -15,7 +15,7 @@ services:
       - {key: SESSION_SECURE, value: "true"}
       - {key: SESSION_TTL, value: 720h}
       - {key: LOGIN_RATE_LIMIT, value: "10"}
-      - {key: SETUP_TOKEN, generateValue: true}
+      - {key: SETUP_TOKEN, sync: false}
       - {key: FOOTBALL_DATA_API_KEY, sync: false}
       - {key: VITE_REMOTE_LOGOS_ENABLED, value: "true"}
       - {key: FOOTAO_ENABLED, value: "false"}

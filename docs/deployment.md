@@ -39,9 +39,10 @@ In the Render Blueprint form, provide:
 
 - `DATABASE_URL`: the Neon pooled connection string.
 - `MIGRATION_DATABASE_URL`: the Neon direct connection string.
+- `SETUP_TOKEN`: a temporary random value of at least 20 characters known to the operator.
 - identifiable user agents and optional provider keys.
 
-The Blueprint requests one free web instance, builds only after GitHub checks pass, and enables remote provider marks for this operator deployment. Free instances can spin down during inactivity, so the first request after an idle period may be slower. Render generates `SETUP_TOKEN`; read it from the service's secret environment and use it once at `/setup`. Rotate or remove the value after setup. Keep the health check at `/health`. The service binds to Render's `PORT` automatically.
+The Blueprint requests one free web instance, builds only after GitHub checks pass, and enables remote provider marks for this operator deployment. Free instances can spin down during inactivity, so the first request after an idle period may be slower. Use `SETUP_TOKEN` once at `/setup`, then remove it from the service environment after creating the first administrator. Keep the health check at `/health`. The service binds to Render's `PORT` automatically.
 
 If `pivot.onrender.com` is already allocated, Render assigns another hostname that still contains the service name. A custom `pivot.example.com` domain can be added later without changing the image; set `APP_BASE_URL` to that exact HTTPS origin when doing so.
 
