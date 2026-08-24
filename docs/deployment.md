@@ -6,7 +6,8 @@ Pivot remains private by default. Deploying it does not authorize a public repos
 
 Required values:
 
-- `DATABASE_URL`: PostgreSQL connection string. TLS is required for hosted databases.
+- `DATABASE_URL`: pooled PostgreSQL connection string used by the application. TLS is required for hosted databases.
+- `MIGRATION_DATABASE_URL`: optional direct PostgreSQL connection string used by Goose. It falls back to `DATABASE_URL` for self-hosted installations.
 - `APP_BASE_URL`: exact public frontend origin, without a trailing slash.
 - `SESSION_SECURE=true`: required behind HTTPS.
 - `SETUP_TOKEN`: a random one-time secret of at least 20 characters for the first-install assistant.
@@ -26,18 +27,27 @@ Back up the `pivot-production-data` volume with `pg_dump` before upgrades. Resto
 
 ## Render and Neon reference
 
-`render.yaml` defines a Docker Go web service and a Render static site. In the Render Blueprint form, provide:
+`render.yaml` defines one Render Docker web service named `pivot`. Its multi-stage image builds Vue, bundles the resulting static files with the Go API, and serves both from the same origin. This gives the V1 one public URL (ideally `https://pivot.onrender.com`), avoids third-party session cookies between separate `onrender.com` services, and keeps Vue Router fallbacks inside the application. Render derives `APP_BASE_URL` from `RENDER_EXTERNAL_URL`; set `APP_BASE_URL` explicitly only when attaching a custom domain.
 
-- `DATABASE_URL`: the Neon pooled connection string with `sslmode=require`.
-- `APP_BASE_URL`: the final `https://…onrender.com` frontend origin.
-- `VITE_API_BASE_URL`: the final API URL ending in `/api/v1`.
+Create a Neon project in a European region, then copy both connection strings from the **Connect** dialog:
+
+- use the pooled hostname containing `-pooler` for `DATABASE_URL`;
+- disable pooling and use the direct hostname for `MIGRATION_DATABASE_URL`;
+- retain `sslmode=require` and `channel_binding=require` on both URLs.
+
+In the Render Blueprint form, provide:
+
+- `DATABASE_URL`: the Neon pooled connection string.
+- `MIGRATION_DATABASE_URL`: the Neon direct connection string.
 - identifiable user agents and optional provider keys.
 
-Render generates `SETUP_TOKEN`; read it from the API service secret environment and use it once at `/setup`. Rotate or remove the value after setup. Keep the API health check at `/health`. The service binds to Render's `PORT` automatically.
+The Blueprint requests one non-sleeping Starter instance, builds only after GitHub checks pass, and enables remote provider marks for this operator deployment. Render generates `SETUP_TOKEN`; read it from the service's secret environment and use it once at `/setup`. Rotate or remove the value after setup. Keep the health check at `/health`. The service binds to Render's `PORT` automatically.
+
+If `pivot.onrender.com` is already allocated, Render assigns another hostname that still contains the service name. A custom `pivot.example.com` domain can be added later without changing the image; set `APP_BASE_URL` to that exact HTTPS origin when doing so.
 
 ## Scheduled collections
 
-`.github/workflows/collections.yml` is disabled until the repository variable `COLLECTIONS_ENABLED` equals `true`. Configure GitHub Actions secrets for the production database and enabled connectors, then use `workflow_dispatch` once before relying on schedules.
+`.github/workflows/collections.yml` is disabled until the repository variable `COLLECTIONS_ENABLED` equals `true`. Configure the pooled production `DATABASE_URL` and enabled connectors as GitHub Actions secrets, then use `workflow_dispatch` once before relying on schedules. Never store `MIGRATION_DATABASE_URL` in Actions because collection jobs do not perform schema changes.
 
 Default cadence:
 

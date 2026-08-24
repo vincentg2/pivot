@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
 
-goose -dir /app/migrations postgres "$DATABASE_URL" up
+migration_database_url="${MIGRATION_DATABASE_URL:-$DATABASE_URL}"
+goose -dir /app/migrations postgres "$migration_database_url" up
 exec pivot-api

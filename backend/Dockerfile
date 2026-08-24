@@ -1,4 +1,15 @@
 # syntax=docker/dockerfile:1
+FROM node:22-alpine AS frontend-builder
+WORKDIR /src
+RUN corepack enable
+COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY frontend/package.json ./frontend/package.json
+RUN pnpm install --frozen-lockfile
+COPY frontend ./frontend
+ARG VITE_REMOTE_LOGOS_ENABLED=true
+ENV VITE_REMOTE_LOGOS_ENABLED=$VITE_REMOTE_LOGOS_ENABLED
+RUN pnpm --filter @pivot/frontend build
+
 FROM golang:1.24-alpine AS builder
 WORKDIR /src
 RUN apk add --no-cache ca-certificates git
@@ -16,8 +27,10 @@ FROM alpine:3.22
 RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /app
 COPY --from=builder /out/ /usr/local/bin/
+COPY --from=frontend-builder /src/frontend/dist ./public
 COPY backend/migrations ./migrations
 COPY backend/docker-entrypoint.sh /usr/local/bin/pivot-entrypoint
 RUN chmod 0555 /usr/local/bin/pivot-entrypoint
 EXPOSE 8080
+ENV WEB_DIST_DIR=/app/public
 ENTRYPOINT ["pivot-entrypoint"]

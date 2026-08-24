@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -122,6 +123,7 @@ func main() {
 	admin.DELETE("/news/feeds/:id", newsHandler.DeleteFeed)
 	admin.GET("/collections/news", newsHandler.CollectionStatus)
 	admin.POST("/collections/news", newsHandler.Sync)
+	useFrontend(e, cfg.WebDistDir)
 
 	go func() {
 		logger.Info("server starting", "address", cfg.Address, "environment", cfg.Environment)
@@ -136,6 +138,20 @@ func main() {
 	if err := e.Shutdown(shutdownCtx); err != nil {
 		logger.Error("shutdown failed", "error", err)
 	}
+}
+
+func useFrontend(e *echo.Echo, root string) {
+	if root == "" {
+		return
+	}
+	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+		Root:  root,
+		HTML5: true,
+		Skipper: func(c echo.Context) bool {
+			path := c.Request().URL.Path
+			return strings.HasPrefix(path, "/api/") || path == "/health" || (c.Request().Method != http.MethodGet && c.Request().Method != http.MethodHead)
+		},
+	}))
 }
 
 func newLoginRateLimiter(requestsPerMinute int) middleware.RateLimiterStore {

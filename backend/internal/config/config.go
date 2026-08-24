@@ -12,6 +12,7 @@ type Config struct {
 	Environment        string
 	Address            string
 	BaseURL            string
+	WebDistDir         string
 	DatabaseURL        string
 	SessionCookieName  string
 	SessionSecure      bool
@@ -45,10 +46,15 @@ func Load() (Config, error) {
 	if address == "" {
 		address = ":" + env("PORT", "8080")
 	}
+	baseURL := os.Getenv("APP_BASE_URL")
+	if baseURL == "" {
+		baseURL = env("RENDER_EXTERNAL_URL", "http://localhost:5173")
+	}
 	cfg := Config{
 		Environment:        env("APP_ENV", "development"),
 		Address:            address,
-		BaseURL:            env("APP_BASE_URL", "http://localhost:5173"),
+		BaseURL:            strings.TrimRight(baseURL, "/"),
+		WebDistDir:         os.Getenv("WEB_DIST_DIR"),
 		DatabaseURL:        os.Getenv("DATABASE_URL"),
 		SessionCookieName:  env("SESSION_COOKIE_NAME", "pivot_session"),
 		SessionSecure:      secure,

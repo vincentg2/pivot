@@ -56,6 +56,10 @@ docker compose -f compose.selfhosted.yml up --build -d
 
 Open `http://localhost:3000/setup`. Use TLS and `SESSION_SECURE=true` outside localhost. The API container applies Goose migrations before starting. See [deployment documentation](docs/deployment.md) for backups, Neon, Render, and scheduled collections.
 
+## Render V1
+
+The production Blueprint builds Vue and Go into one Render web service so the application, API, and session cookie share a single origin. The intended service URL is `https://pivot.onrender.com`; a custom domain can be attached later. Neon provides the external PostgreSQL database with separate pooled application and direct migration connection strings. Follow the secret-safe checklist in [deployment documentation](docs/deployment.md).
+
 ## Data and licensing
 
 Pivot works without data-provider keys. Read [data source policy](docs/data-sources.md) and [third-party notices](THIRD_PARTY_NOTICES.md) before enabling connectors. The code is MIT licensed; third-party data, names, and images are not.
