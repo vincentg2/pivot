@@ -6,6 +6,7 @@ import ClubMark from '@/components/ClubMark.vue'
 import MatchRow from '@/components/MatchRow.vue'
 import NewsCard from '@/components/NewsCard.vue'
 import { api } from '@/lib/api'
+import { broadcastChannelsByMatch, type BroadcastListing } from '@/lib/broadcast'
 import { addDays, localDate, type FootballMatch } from '@/lib/football'
 import { useSessionStore } from '@/stores/session'
 import { useFavoritesStore } from '@/stores/favorites'
@@ -13,7 +14,9 @@ import type { NewsItem } from '@/lib/news'
 const session = useSessionStore()
 const favorites = useFavoritesStore()
 const favoriteMatches = ref<FootballMatch[]>([])
+const broadcasts = ref<BroadcastListing[]>([])
 const news = ref<NewsItem[]>([])
+const channelsByMatch = computed(() => broadcastChannelsByMatch(broadcasts.value))
 const todayLabel = computed(() =>
   new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(
     new Date(),
@@ -23,11 +26,13 @@ onMounted(async () => {
   if (!favorites.ready) await favorites.load()
   const from = localDate(new Date())
   const to = localDate(addDays(new Date(), 7))
-  const [matchResponse, newsResponse] = await Promise.all([
+  const [matchResponse, broadcastResponse, newsResponse] = await Promise.all([
     api<{ matches: FootballMatch[] }>(`/matches?from=${from}&to=${to}`),
+    api<{ listings: BroadcastListing[] }>(`/broadcasts?from=${from}&to=${to}`),
     api<{ news: NewsItem[] }>('/news?limit=6'),
   ])
   favoriteMatches.value = matchResponse.matches.filter((match) => match.favorite).slice(0, 5)
+  broadcasts.value = broadcastResponse.listings
   news.value = newsResponse.news
 })
 </script>
@@ -70,8 +75,10 @@ onMounted(async () => {
       <div v-if="favoriteMatches.length" class="compact-matches">
         <MatchRow
           v-for="(match, index) in favoriteMatches"
-          :key="`${match.utcDate}-${index}`"
+          :key="match.id || `${match.utcDate}-${index}`"
           :match="match"
+          :channels="channelsByMatch.get(match.id)"
+          show-channel-status
         />
       </div>
       <p v-else class="quiet dashboard-empty-line">

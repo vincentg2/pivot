@@ -505,6 +505,9 @@ small {
   color: var(--muted);
   font-size: 0.68rem;
 }
+.match-channels .pending {
+  border-style: dashed;
+}
 .external-match-row {
   display: grid;
   min-height: 78px;

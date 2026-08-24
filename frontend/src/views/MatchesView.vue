@@ -5,7 +5,7 @@ import MatchRow from '@/components/MatchRow.vue'
 import { api } from '@/lib/api'
 import { addDays, localDate, type FootballMatch } from '@/lib/football'
 import type { Competition } from '@/stores/favorites'
-import { listingTime, type BroadcastListing } from '@/lib/broadcast'
+import { broadcastChannelsByMatch, listingTime, type BroadcastListing } from '@/lib/broadcast'
 
 const matches = ref<FootballMatch[]>([])
 const broadcasts = ref<BroadcastListing[]>([])
@@ -27,16 +27,7 @@ const groupedMatches = computed(() => {
   }
   return [...groups.entries()]
 })
-const channelsByMatch = computed(() => {
-  const map = new Map<string, string[]>()
-  for (const listing of broadcasts.value) {
-    if (!listing.matchId) continue
-    map.set(listing.matchId, [
-      ...new Set([...(map.get(listing.matchId) || []), ...listing.channels]),
-    ])
-  }
-  return map
-})
+const channelsByMatch = computed(() => broadcastChannelsByMatch(broadcasts.value))
 const externalByDate = computed(() => {
   const map = new Map<string, BroadcastListing[]>()
   if (favoritesOnly.value) return map

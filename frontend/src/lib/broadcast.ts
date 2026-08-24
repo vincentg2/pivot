@@ -27,3 +27,14 @@ export function listingTime(value: string): string {
     new Date(value),
   )
 }
+
+export function broadcastChannelsByMatch(listings: BroadcastListing[]): Map<string, string[]> {
+  const channels = new Map<string, string[]>()
+  for (const listing of listings) {
+    if (!listing.matchId) continue
+    channels.set(listing.matchId, [
+      ...new Set([...(channels.get(listing.matchId) || []), ...listing.channels]),
+    ])
+  }
+  return channels
+}
