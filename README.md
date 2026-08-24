@@ -5,7 +5,7 @@
 <h1 align="center">Pivot</h1>
 
 <p align="center">
-  A private football dashboard for the clubs you actually follow.
+  Open-source software for running your own private football dashboard.
 </p>
 
 <p align="center">
@@ -13,9 +13,9 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2457ff.svg" alt="MIT license"></a>
 </p>
 
-Pivot brings fixtures, results, standings, French TV listings, and official club news into one responsive, invitation-only experience. It is designed for a small private community first and packaged as a self-hostable MIT-licensed project.
+Pivot brings fixtures, results, standings, French TV listings, and official club news into one responsive, invitation-only experience. The source code is open under the MIT license; each installation remains private and fully controlled by its operator.
 
-> **Résumé français —** Pivot est un tableau de bord football privé et responsive. Il rassemble les clubs favoris, matchs, résultats, classements, diffusions françaises et actualités officielles. L'inscription se fait sur invitation et le projet peut être auto-hébergé.
+> **Résumé français —** Pivot est un tableau de bord football privé et responsive. Il rassemble les clubs favoris, matchs, résultats, classements, diffusions françaises et actualités officielles. Le code est open source sous licence MIT ; chaque instance reste privée, sur invitation et sous le contrôle de son opérateur.
 
 ## What Pivot includes
 
@@ -125,4 +125,6 @@ Read [Deployment and operations](docs/deployment.md) for production secrets, poo
 
 ## Project status
 
-The five initial product milestones are implemented. The repository stays private until its owner explicitly requests the first public release; GHCR image publishing will begin with that release.
+Pivot V1's five initial product milestones are implemented, and the repository is ready for its first public release. The hosted application remains invitation-only: making the source public does not expose user accounts, runtime data, or deployment secrets.
+
+Issues and focused pull requests are welcome. Please read the [contribution guide](CONTRIBUTING.md) before proposing a change, and report vulnerabilities privately according to the [security policy](SECURITY.md).
