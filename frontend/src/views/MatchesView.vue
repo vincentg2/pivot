@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import ChannelMark from '@/components/ChannelMark.vue'
 import MatchRow from '@/components/MatchRow.vue'
@@ -16,6 +17,7 @@ const to = ref(from.value)
 const competition = ref('')
 const favoritesOnly = ref(false)
 const loading = ref(true)
+const { locale, t } = useI18n()
 
 const visibleMatches = computed(() =>
   favoritesOnly.value ? matches.value.filter((match) => match.favorite) : matches.value,
@@ -77,7 +79,7 @@ function changeStart() {
   void load()
 }
 function dateHeading(value: string) {
-  return new Intl.DateTimeFormat('en-GB', {
+  return new Intl.DateTimeFormat(locale.value, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -92,42 +94,44 @@ onMounted(async () => {
 <template>
   <main class="matches-page page-width">
     <header class="matches-heading">
-      <h1>Matches</h1>
+      <h1>{{ t('matches.title') }}</h1>
     </header>
     <section class="date-presets" aria-label="Match date range">
-      <button @click="choose(addDays(new Date(), -1))">Yesterday</button>
-      <button @click="choose(new Date())">Today</button>
-      <button @click="choose(addDays(new Date(), 1))">Tomorrow</button>
-      <button @click="choose(new Date(), 7)">Next 7 days</button>
+      <button @click="choose(addDays(new Date(), -1))">{{ t('matches.yesterday') }}</button>
+      <button @click="choose(new Date())">{{ t('matches.today') }}</button>
+      <button @click="choose(addDays(new Date(), 1))">{{ t('matches.tomorrow') }}</button>
+      <button @click="choose(new Date(), 7)">{{ t('matches.next7') }}</button>
     </section>
     <section class="match-filters" aria-label="Match filters">
-      <button class="icon-link" aria-label="Previous period" @click="shift(-1)">
+      <button class="icon-link" :aria-label="t('matches.previous')" @click="shift(-1)">
         <ChevronLeft :size="19" />
       </button>
       <label
         ><span class="sr-only">Start date</span
         ><input v-model="from" type="date" @change="changeStart"
       /></label>
-      <button class="icon-link" aria-label="Next period" @click="shift(1)">
+      <button class="icon-link" :aria-label="t('matches.next')" @click="shift(1)">
         <ChevronRight :size="19" />
       </button>
       <label
         ><span class="sr-only">Competition</span
         ><select v-model="competition" @change="load">
-          <option value="">All competitions</option>
+          <option value="">{{ t('matches.allCompetitions') }}</option>
           <option v-for="item in competitions" :key="item.id" :value="item.code">
             {{ item.name }}
           </option>
         </select></label
       >
-      <label class="check-filter"><input v-model="favoritesOnly" type="checkbox" /> My clubs</label>
+      <label class="check-filter"
+        ><input v-model="favoritesOnly" type="checkbox" /> {{ t('matches.myClubs') }}</label
+      >
     </section>
     <p v-if="loading" class="catalog-state">Loading matches…</p>
     <div v-else-if="dates.length" class="match-groups">
       <section v-for="date in dates" :key="date">
         <div class="match-date">
           <h2>{{ dateHeading(date) }}</h2>
-          <span>{{ matchesByDate.get(date)?.length || 0 }} matches</span>
+          <span>{{ t('matches.count', { count: matchesByDate.get(date)?.length || 0 }) }}</span>
         </div>
         <MatchRow
           v-for="match in matchesByDate.get(date) || []"
@@ -153,8 +157,8 @@ onMounted(async () => {
     </div>
     <section v-else class="empty-hero matches-empty">
       <CalendarDays :size="28" />
-      <h2>No matches in this window</h2>
-      <p>Try another date or ask an administrator to refresh sports data.</p>
+      <h2>{{ t('matches.empty') }}</h2>
+      <p>{{ t('matches.emptyHelp') }}</p>
     </section>
     <p class="attribution">
       Football data provided by football-data.org. TV schedule provided by Footao. Times shown in

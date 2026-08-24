@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import AuthLayout from '@/components/AuthLayout.vue'
 import { ApiError } from '@/lib/api'
 import { useSessionStore } from '@/stores/session'
@@ -12,6 +13,7 @@ const submitting = ref(false)
 const session = useSessionStore()
 const router = useRouter()
 const route = useRoute()
+const { t } = useI18n()
 async function submit() {
   submitting.value = true
   error.value = ''
@@ -27,28 +29,28 @@ async function submit() {
 </script>
 
 <template>
-  <AuthLayout
-    eyebrow="Private by design"
-    title="Your football world, in one quiet place."
-    intro="Follow the clubs that matter. See what’s next without the noise."
-  >
+  <AuthLayout :eyebrow="t('auth.private')" :title="t('auth.story')" :intro="t('auth.intro')">
     <div class="form-heading">
-      <p class="eyebrow">Welcome back</p>
-      <h2>Sign in to Pivot</h2>
-      <p>Access is limited to invited members.</p>
+      <p class="eyebrow">{{ t('auth.welcome') }}</p>
+      <h2>{{ t('auth.signInTitle') }}</h2>
+      <p>{{ t('auth.invitedOnly') }}</p>
     </div>
     <form class="form-stack" @submit.prevent="submit">
       <p v-if="error" class="form-error" role="alert">{{ error }}</p>
-      <label>Email<input v-model="email" type="email" autocomplete="email" required /></label>
       <label
-        >Password<input v-model="password" type="password" autocomplete="current-password" required
+        >{{ t('auth.email') }}<input v-model="email" type="email" autocomplete="email" required
+      /></label>
+      <label
+        >{{ t('auth.password')
+        }}<input v-model="password" type="password" autocomplete="current-password" required
       /></label>
       <button class="button primary" type="submit" :disabled="submitting">
-        {{ submitting ? 'Signing in…' : 'Sign in' }}
+        {{ submitting ? t('auth.signingIn') : t('auth.signIn') }}
       </button>
     </form>
     <p class="form-foot">
-      Have an invitation? <RouterLink to="/register">Create an account</RouterLink>
+      {{ t('auth.haveInvite') }}
+      <RouterLink to="/register">{{ t('auth.createAccount') }}</RouterLink>
     </p>
   </AuthLayout>
 </template>

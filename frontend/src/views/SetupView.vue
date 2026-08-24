@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ArrowRight, KeyRound, ShieldCheck } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import AuthLayout from '@/components/AuthLayout.vue'
 import { api } from '@/lib/api'
 import { markInstalled } from '@/lib/installation'
@@ -9,6 +10,7 @@ import { useSessionStore } from '@/stores/session'
 
 const router = useRouter()
 const session = useSessionStore()
+const { t } = useI18n()
 const configured = ref(true)
 const loading = ref(true)
 const error = ref('')
@@ -29,31 +31,30 @@ async function install() {
     await session.login(form.email, form.password)
     await router.push('/')
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'Installation could not be completed.'
+    error.value = caught instanceof Error ? caught.message : t('auth.installFailed')
   }
 }
 </script>
 
 <template>
   <AuthLayout
-    eyebrow="First installation"
-    title="Make Pivot yours."
-    intro="Create the first administrator, then invite the people who belong here."
+    :eyebrow="t('auth.setupEyebrow')"
+    :title="t('auth.setupTitle')"
+    :intro="t('auth.setupIntro')"
   >
-    <div v-if="loading" class="quiet">Checking this installation…</div>
+    <div v-if="loading" class="quiet">{{ t('auth.checking') }}</div>
     <div v-else>
       <div class="form-heading">
         <div class="setup-icon"><ShieldCheck :size="24" /></div>
-        <h2>First administrator</h2>
-        <p>Use the one-time setup token configured on the server.</p>
+        <h2>{{ t('auth.firstAdmin') }}</h2>
+        <p>{{ t('auth.setupHelp') }}</p>
       </div>
       <p v-if="!configured" class="form-error" role="alert">
-        Set a secret <code>SETUP_TOKEN</code> of at least 20 characters on the server, then restart
-        Pivot.
+        {{ t('auth.setupMissing') }}
       </p>
       <form v-else class="form-stack" @submit.prevent="install">
         <label
-          >Setup token
+          >{{ t('auth.setupToken') }}
           <div class="input-with-icon">
             <KeyRound :size="17" /><input
               v-model="form.token"
@@ -62,31 +63,36 @@ async function install() {
               required
             /></div></label
         ><label
-          >Nickname<input
+          >{{ t('auth.nickname')
+          }}<input
             v-model="form.nickname"
             minlength="2"
             maxlength="40"
             autocomplete="nickname"
             required /></label
         ><label
-          >Email<input
+          >{{ t('auth.email')
+          }}<input
             v-model="form.email"
             type="email"
             maxlength="254"
             autocomplete="email"
             required /></label
         ><label
-          >Password<input
+          >{{ t('auth.password')
+          }}<input
             v-model="form.password"
             type="password"
             minlength="12"
             maxlength="128"
             autocomplete="new-password"
             required
-          /><small>At least 12 characters.</small></label
+          /><small>{{ t('auth.passwordHelp') }}</small></label
         >
         <p v-if="error" class="form-error" role="alert">{{ error }}</p>
-        <button class="button primary">Create administrator <ArrowRight :size="17" /></button>
+        <button class="button primary">
+          {{ t('auth.createAdmin') }} <ArrowRight :size="17" />
+        </button>
       </form>
     </div>
   </AuthLayout>

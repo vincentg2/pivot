@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ClubMark from '@/components/ClubMark.vue'
 import { ApiError, api } from '@/lib/api'
 import type { Standing } from '@/lib/football'
@@ -9,6 +10,7 @@ const competitions = ref<Competition[]>([])
 const selected = ref('')
 const standing = ref<Standing | null>(null)
 const error = ref('')
+const { t } = useI18n()
 async function load() {
   if (!selected.value) return
   error.value = ''
@@ -33,9 +35,10 @@ onMounted(async () => {
 <template>
   <main class="standings-page page-width">
     <header class="standings-heading">
-      <h1>Tables</h1>
+      <h1>{{ t('tables.title') }}</h1>
       <label
-        >Competition<select v-model="selected" @change="load">
+        >{{ t('tables.competition')
+        }}<select v-model="selected" @change="load">
           <option v-for="item in competitions" :key="item.id" :value="item.code">
             {{ item.name }}
           </option>
@@ -57,9 +60,9 @@ onMounted(async () => {
       </div>
       <div class="standing-table" role="table" aria-label="League standing">
         <div class="standing-row standing-head" role="row">
-          <span>#</span><span>Club</span><span>P</span><span class="wide-stat">W</span
-          ><span class="wide-stat">D</span><span class="wide-stat">L</span><span>GD</span
-          ><strong>Pts</strong>
+          <span>#</span><span>{{ t('tables.club') }}</span
+          ><span>P</span><span class="wide-stat">W</span><span class="wide-stat">D</span
+          ><span class="wide-stat">L</span><span>GD</span><strong>Pts</strong>
         </div>
         <div
           v-for="row in standing.rows"
@@ -87,8 +90,8 @@ onMounted(async () => {
       </div>
     </section>
     <section v-else-if="!error" class="empty-hero">
-      <h2>No table synchronized yet</h2>
-      <p>Run the sports data collection from administration.</p>
+      <h2>{{ t('tables.empty') }}</h2>
+      <p>{{ t('tables.emptyHelp') }}</p>
     </section>
     <p class="attribution">Football data provided by football-data.org.</p>
   </main>

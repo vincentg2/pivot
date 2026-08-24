@@ -4,6 +4,8 @@ import { ArrowLeft, EyeOff, RotateCcw, Save } from 'lucide-vue-next'
 import { api } from '@/lib/api'
 import { addDays, localDate } from '@/lib/football'
 import { listingTime, type BroadcastAudit, type BroadcastListing } from '@/lib/broadcast'
+import { useI18n } from 'vue-i18n'
+const { locale, t } = useI18n()
 
 const listings = ref<BroadcastListing[]>([])
 const audit = ref<BroadcastAudit[]>([])
@@ -66,7 +68,7 @@ async function save() {
     await load()
     const refreshed = listings.value.find((item) => item.id === selected.value?.id)
     if (refreshed) edit(refreshed)
-    message.value = 'Correction saved and recorded in the audit trail.'
+    message.value = t('adminTv.saved')
   } finally {
     saving.value = false
   }
@@ -74,7 +76,7 @@ async function save() {
 async function clearCorrection() {
   if (!selected.value) return
   await api(`/admin/broadcasts/${selected.value.id}/correction`, { method: 'DELETE' })
-  message.value = 'Correction cleared. The provider value is active again.'
+  message.value = t('adminTv.cleared')
   selected.value = null
   await load()
 }
@@ -83,18 +85,18 @@ onMounted(load)
 
 <template>
   <main class="admin-tv page-width">
-    <RouterLink to="/admin" class="back-link"><ArrowLeft :size="16" /> Administration</RouterLink>
+    <RouterLink to="/admin" class="back-link"
+      ><ArrowLeft :size="16" /> {{ t('admin.eyebrow') }}</RouterLink
+    >
     <header class="settings-title">
-      <p class="eyebrow">Television administration</p>
-      <h1>Review the schedule.</h1>
-      <p>
-        Operator corrections always take priority over imported values. Every change is auditable.
-      </p>
+      <p class="eyebrow">{{ t('adminTv.eyebrow') }}</p>
+      <h1>{{ t('adminTv.title') }}</h1>
+      <p>{{ t('adminTv.intro') }}</p>
     </header>
     <div class="admin-tv-layout">
       <section class="settings-card tv-review-list">
-        <h2>Next seven days</h2>
-        <p v-if="!listings.length" class="quiet">No TV listings have been collected.</p>
+        <h2>{{ t('adminTv.next7') }}</h2>
+        <p v-if="!listings.length" class="quiet">{{ t('adminTv.none') }}</p>
         <button
           v-for="item in listings"
           :key="item.id"
@@ -103,75 +105,87 @@ onMounted(load)
           @click="edit(item)"
         >
           <time :datetime="item.startsAt"
-            >{{ new Date(item.startsAt).toLocaleDateString() }} ·
+            >{{ new Date(item.startsAt).toLocaleDateString(locale) }} ·
             {{ listingTime(item.startsAt) }}</time
           >
           <strong>{{ item.label }}</strong
-          ><span>{{ item.channels.join(', ') }}</span> <small v-if="item.corrected">Corrected</small
-          ><small v-if="item.hidden"><EyeOff :size="12" /> Hidden</small>
+          ><span>{{ item.channels.join(', ') }}</span>
+          <small v-if="item.corrected">{{ t('adminTv.corrected') }}</small
+          ><small v-if="item.hidden"><EyeOff :size="12" /> {{ t('adminTv.hidden') }}</small>
         </button>
       </section>
       <section class="settings-card tv-editor">
         <template v-if="selected">
-          <h2>Edit listing</h2>
+          <h2>{{ t('adminTv.edit') }}</h2>
           <form class="form-stack" @submit.prevent="save">
             <label
-              >Date and time<input v-model="form.startsAt" type="datetime-local" required
+              >{{ t('adminTv.date') }}<input v-model="form.startsAt" type="datetime-local" required
             /></label>
-            <label>Display label<input v-model="form.label" maxlength="280" required /></label>
+            <label
+              >{{ t('adminTv.label') }}<input v-model="form.label" maxlength="280" required
+            /></label>
             <div class="two-fields">
-              <label>Home team<input v-model="form.homeName" maxlength="140" /></label
-              ><label>Away team<input v-model="form.awayName" maxlength="140" /></label>
-            </div>
-            <label>Competition<input v-model="form.competitionName" maxlength="140" /></label>
-            <div class="two-fields">
-              <label
-                >Type<select v-model="form.kind">
-                  <option value="live">Live</option>
-                  <option value="delayed">Delayed</option>
-                  <option value="replay">Replay</option>
-                </select></label
+              <label>{{ t('adminTv.home') }}<input v-model="form.homeName" maxlength="140" /></label
               ><label
-                >Channels<input v-model="form.channels" placeholder="Canal+, beIN Sports 1"
+                >{{ t('adminTv.away') }}<input v-model="form.awayName" maxlength="140"
               /></label>
             </div>
             <label
-              >Audit note<input
+              >{{ t('adminTv.competition') }}<input v-model="form.competitionName" maxlength="140"
+            /></label>
+            <div class="two-fields">
+              <label
+                >{{ t('adminTv.type')
+                }}<select v-model="form.kind">
+                  <option value="live">{{ t('adminTv.live') }}</option>
+                  <option value="delayed">{{ t('adminTv.delayed') }}</option>
+                  <option value="replay">{{ t('adminTv.replay') }}</option>
+                </select></label
+              ><label
+                >{{ t('adminTv.channels')
+                }}<input v-model="form.channels" placeholder="Canal+, beIN Sports 1"
+              /></label>
+            </div>
+            <label
+              >{{ t('adminTv.note')
+              }}<input
                 v-model="form.note"
                 maxlength="300"
-                placeholder="Reason for the correction"
+                :placeholder="t('adminTv.notePlaceholder')"
             /></label>
             <label class="check-filter admin-hidden"
-              ><input v-model="form.hidden" type="checkbox" /> Hide this listing from members</label
+              ><input v-model="form.hidden" type="checkbox" /> {{ t('adminTv.hide') }}</label
             >
             <div class="save-row">
               <button class="button primary" :disabled="saving">
-                <Save :size="16" /> {{ saving ? 'Saving…' : 'Save correction' }}</button
+                <Save :size="16" /> {{ saving ? t('adminTv.saving') : t('adminTv.save') }}</button
               ><button
                 v-if="selected.corrected"
                 type="button"
                 class="button secondary"
                 @click="clearCorrection"
               >
-                <RotateCcw :size="16" /> Restore import
+                <RotateCcw :size="16" /> {{ t('adminTv.restore') }}
               </button>
             </div>
             <p v-if="message" class="collection-status" role="status">{{ message }}</p>
           </form>
         </template>
         <div v-else class="tv-editor-empty">
-          <p>Select a listing to correct its public presentation.</p>
+          <p>{{ t('adminTv.select') }}</p>
         </div>
       </section>
     </div>
     <section class="settings-card tv-audit">
-      <h2>Recent audit</h2>
-      <p v-if="!audit.length" class="quiet">No manual corrections yet.</p>
+      <h2>{{ t('adminTv.audit') }}</h2>
+      <p v-if="!audit.length" class="quiet">{{ t('adminTv.noAudit') }}</p>
       <ol v-else>
         <li v-for="entry in audit" :key="entry.id">
           <span class="status">{{ entry.action }}</span
           ><code>{{ entry.listingId.slice(0, 8) }}</code
-          ><time :datetime="entry.createdAt">{{ new Date(entry.createdAt).toLocaleString() }}</time>
+          ><time :datetime="entry.createdAt">{{
+            new Date(entry.createdAt).toLocaleString(locale)
+          }}</time>
         </li>
       </ol>
     </section>

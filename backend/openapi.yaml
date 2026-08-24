@@ -63,8 +63,13 @@ paths:
         '200': {description: Current user}
   /profile:
     patch:
-      summary: Update nickname and synchronized theme
+      summary: Update nickname, synchronized theme, and language
       security: [{cookieSession: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProfileUpdate'}
       responses: {'200': {description: Updated}}
     delete:
       summary: Permanently delete the current account
@@ -297,6 +302,21 @@ components:
       properties:
         token: {type: string, minLength: 20, maxLength: 200}
         password: {type: string, minLength: 12, maxLength: 128}
+    ProfileUpdate:
+      type: object
+      required: [nickname, theme, locale]
+      properties:
+        nickname: {type: string, minLength: 2, maxLength: 40}
+        theme: {type: string, enum: [system, light, dark]}
+        locale: {type: string, enum: [fr, en], default: fr}
+    MatchGoal:
+      type: object
+      required: [minute, type, scorerName]
+      properties:
+        minute: {type: integer, minimum: 0}
+        injuryTime: {type: [integer, 'null'], minimum: 0}
+        type: {type: string}
+        scorerName: {type: string}
     FirstInstall:
       type: object
       required: [token, email, password, nickname]

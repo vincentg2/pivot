@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Heart, Search } from 'lucide-vue-next'
 import ClubMark from '@/components/ClubMark.vue'
 import { ApiError, api } from '@/lib/api'
@@ -13,6 +14,7 @@ const search = ref('')
 const loading = ref(true)
 const error = ref('')
 const notice = ref('')
+const { t } = useI18n()
 
 const filteredClubs = computed(() => {
   const query = search.value.trim().toLocaleLowerCase()
@@ -67,9 +69,9 @@ onMounted(async () => {
 <template>
   <main class="catalog page-width">
     <header class="catalog-heading">
-      <h1>Clubs</h1>
+      <h1>{{ t('clubs.title') }}</h1>
       <p class="favorite-count">
-        <strong>{{ favorites.clubs.length }}</strong> / 5 favorites
+        {{ t('clubs.favorites', { count: favorites.clubs.length }) }}
       </p>
     </header>
 
@@ -77,11 +79,11 @@ onMounted(async () => {
       <div class="search-field">
         <Search :size="18" />
         <label class="sr-only" for="club-search">Search clubs</label>
-        <input id="club-search" v-model="search" type="search" placeholder="Search a club" />
+        <input id="club-search" v-model="search" type="search" :placeholder="t('clubs.search')" />
       </div>
       <div class="competition-tabs" aria-label="Filter by competition">
         <button :class="{ active: !selectedCompetition }" @click="selectCompetition('')">
-          All
+          {{ t('clubs.all') }}
         </button>
         <button
           v-for="competition in competitions"
@@ -95,7 +97,7 @@ onMounted(async () => {
     </section>
 
     <p v-if="notice || error" class="form-error" role="alert">{{ notice || error }}</p>
-    <p v-if="loading" class="catalog-state">Loading the local catalog…</p>
+    <p v-if="loading" class="catalog-state">{{ t('clubs.loading') }}</p>
     <section v-else-if="filteredClubs.length" class="club-grid" aria-label="Clubs">
       <article v-for="club in filteredClubs" :key="club.id" class="club-card">
         <RouterLink :to="`/clubs/${club.id}`" class="club-card-main">
@@ -122,12 +124,9 @@ onMounted(async () => {
       </article>
     </section>
     <section v-else class="empty-hero catalog-empty">
-      <p class="eyebrow">Local catalog</p>
-      <h2>No clubs synchronized yet</h2>
-      <p>
-        An administrator can enable football-data.org and start the first collection. Pivot remains
-        fully usable without an external key.
-      </p>
+      <p class="eyebrow">{{ t('common.local') }}</p>
+      <h2>{{ t('clubs.empty') }}</h2>
+      <p>{{ t('clubs.emptyHelp') }}</p>
     </section>
     <p class="attribution">
       Football data provided by football-data.org. Remote crests are disabled by default.

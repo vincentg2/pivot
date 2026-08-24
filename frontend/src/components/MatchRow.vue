@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ChannelMark from '@/components/ChannelMark.vue'
 import ClubMark from '@/components/ClubMark.vue'
 import type { FootballMatch } from '@/lib/football'
@@ -10,21 +11,22 @@ const props = defineProps<{
   showChannelStatus?: boolean
   showDate?: boolean
 }>()
+const { locale, t } = useI18n()
 const finished = computed(() => props.match.status === 'FINISHED')
 const upcoming = computed(() => ['SCHEDULED', 'TIMED'].includes(props.match.status))
 const time = computed(() =>
-  new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(
+  new Intl.DateTimeFormat(locale.value, { hour: '2-digit', minute: '2-digit' }).format(
     new Date(props.match.utcDate),
   ),
 )
 const status = computed(() => {
-  if (finished.value) return 'Full time'
-  if (['IN_PLAY', 'PAUSED'].includes(props.match.status)) return 'Live'
-  if (props.match.status === 'POSTPONED') return 'Postponed'
+  if (finished.value) return t('matches.fullTime')
+  if (['IN_PLAY', 'PAUSED'].includes(props.match.status)) return t('matches.live')
+  if (props.match.status === 'POSTPONED') return t('matches.postponed')
   return time.value
 })
 const dateLabel = computed(() =>
-  new Intl.DateTimeFormat('en-GB', {
+  new Intl.DateTimeFormat(locale.value, {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
@@ -61,7 +63,7 @@ const scheduleLabel = computed(() =>
       aria-label="TV channels"
     >
       <ChannelMark v-for="channel in channels" :key="channel" :channel="channel" />
-      <span v-if="!channels?.length" class="pending">TV channel not announced yet</span>
+      <span v-if="!channels?.length" class="pending">{{ t('dashboard.tvPending') }}</span>
     </div>
   </article>
 </template>

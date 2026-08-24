@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { ArrowLeft, ExternalLink, Heart, MapPin } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import ClubMark from '@/components/ClubMark.vue'
 import MatchRow from '@/components/MatchRow.vue'
 import NewsCard from '@/components/NewsCard.vue'
@@ -11,6 +12,7 @@ import { useFavoritesStore, type Club } from '@/stores/favorites'
 import type { NewsItem } from '@/lib/news'
 
 const route = useRoute()
+const { t } = useI18n()
 const favorites = useFavoritesStore()
 const club = ref<Club | null>(null)
 const notice = ref('')
@@ -22,7 +24,7 @@ async function toggle() {
   try {
     await favorites.toggle(club.value)
   } catch (caught) {
-    notice.value = caught instanceof Error ? caught.message : 'Favorite could not be saved.'
+    notice.value = caught instanceof Error ? caught.message : t('clubs.favoriteFailed')
   }
 }
 
@@ -42,8 +44,10 @@ onMounted(async () => {
 
 <template>
   <main class="club-page page-width">
-    <RouterLink to="/clubs" class="back-link"><ArrowLeft :size="16" /> All clubs</RouterLink>
-    <p v-if="!club" class="catalog-state">Loading club…</p>
+    <RouterLink to="/clubs" class="back-link"
+      ><ArrowLeft :size="16" /> {{ t('clubs.allClubs') }}</RouterLink
+    >
+    <p v-if="!club" class="catalog-state">{{ t('clubs.loadingClub') }}</p>
     <template v-else>
       <header class="club-hero">
         <ClubMark :name="club.name" :tla="club.tla" :crest-url="club.crestUrl" size="lg" />
@@ -57,48 +61,50 @@ onMounted(async () => {
           @click="toggle"
         >
           <Heart :size="17" :fill="favorites.has(club.id) ? 'currentColor' : 'none'" />
-          {{ favorites.has(club.id) ? 'Following' : 'Follow club' }}
+          {{ favorites.has(club.id) ? t('clubs.following') : t('clubs.follow') }}
         </button>
       </header>
       <p v-if="notice" class="form-error" role="alert">{{ notice }}</p>
       <section class="club-details">
         <article>
-          <p class="eyebrow">Home</p>
-          <h2><MapPin :size="20" /> {{ club.venue || 'Venue not listed' }}</h2>
+          <p class="eyebrow">{{ t('clubs.home') }}</p>
+          <h2><MapPin :size="20" /> {{ club.venue || t('clubs.venueMissing') }}</h2>
         </article>
         <article>
-          <p class="eyebrow">Competitions</p>
-          <h2>{{ club.competitions?.map((item) => item.name).join(', ') || 'Not listed' }}</h2>
+          <p class="eyebrow">{{ t('clubs.competitions') }}</p>
+          <h2>
+            {{ club.competitions?.map((item) => item.name).join(', ') || t('clubs.notListed') }}
+          </h2>
         </article>
         <article v-if="club.websiteUrl">
-          <p class="eyebrow">Official</p>
+          <p class="eyebrow">{{ t('clubs.official') }}</p>
           <a :href="club.websiteUrl" target="_blank" rel="noopener noreferrer"
-            >Visit club website <ExternalLink :size="15"
+            >{{ t('clubs.website') }} <ExternalLink :size="15"
           /></a>
         </article>
       </section>
       <section class="club-news">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">Official dispatches</p>
-            <h2>Latest news</h2>
+            <p class="eyebrow">{{ t('clubs.dispatches') }}</p>
+            <h2>{{ t('clubs.latestNews') }}</h2>
           </div>
-          <RouterLink to="/news" class="text-link">All news</RouterLink>
+          <RouterLink to="/news" class="text-link">{{ t('clubs.allNews') }}</RouterLink>
         </div>
         <div v-if="news.length" class="news-grid club-news-grid">
           <NewsCard v-for="item in news" :key="item.id" :item="item" />
         </div>
         <p v-else class="quiet dashboard-empty-line">
-          No official feed has been collected for this club.
+          {{ t('clubs.noNews') }}
         </p>
       </section>
       <section class="club-fixtures">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">Recent & upcoming</p>
-            <h2>Matches</h2>
+            <p class="eyebrow">{{ t('clubs.recentUpcoming') }}</p>
+            <h2>{{ t('clubs.matches') }}</h2>
           </div>
-          <RouterLink to="/matches" class="text-link">All matches</RouterLink>
+          <RouterLink to="/matches" class="text-link">{{ t('clubs.allMatches') }}</RouterLink>
         </div>
         <div v-if="matches.length" class="compact-matches">
           <MatchRow
@@ -107,9 +113,9 @@ onMounted(async () => {
             :match="match"
           />
         </div>
-        <p v-else class="quiet dashboard-empty-line">No matches synchronized in this window.</p>
+        <p v-else class="quiet dashboard-empty-line">{{ t('clubs.noMatches') }}</p>
       </section>
-      <p class="attribution">Football data provided by football-data.org.</p>
+      <p class="attribution">{{ t('common.footballAttribution') }}</p>
     </template>
   </main>
 </template>

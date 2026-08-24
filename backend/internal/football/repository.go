@@ -47,7 +47,33 @@ func (r *PostgresRepository) ListMatches(ctx context.Context, userID uuid.UUID, 
 		}
 		items = append(items, item)
 	}
-	return items, rows.Err()
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	rows.Close()
+	if len(items) == 0 {
+		return items, nil
+	}
+	ids := make([]uuid.UUID, len(items))
+	byID := make(map[uuid.UUID]*Match, len(items))
+	for index := range items {
+		ids[index] = items[index].ID
+		byID[items[index].ID] = &items[index]
+	}
+	goalRows, err := r.pool.Query(ctx, `SELECT match_id,minute,injury_time,goal_type,scorer_name FROM match_goals WHERE match_id=ANY($1) ORDER BY match_id,position`, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer goalRows.Close()
+	for goalRows.Next() {
+		var matchID uuid.UUID
+		var goal Goal
+		if err = goalRows.Scan(&matchID, &goal.Minute, &goal.InjuryTime, &goal.Type, &goal.ScorerName); err != nil {
+			return nil, err
+		}
+		byID[matchID].Goals = append(byID[matchID].Goals, goal)
+	}
+	return items, goalRows.Err()
 }
 
 func (r *PostgresRepository) CurrentStanding(ctx context.Context, competitionCode string) (Standing, error) {
@@ -99,9 +125,20 @@ func (r *PostgresRepository) SaveCompetitionData(ctx context.Context, code strin
 		}
 	}
 	for _, item := range matches {
-		_, err = tx.Exec(ctx, `INSERT INTO matches(id,provider,provider_id,competition_id,season_id,utc_date,status,stage,matchday,home_club_id,away_club_id,home_name,away_name,home_score,away_score) VALUES($1,'football-data.org',$2,$3,$4,$5,$6,$7,$8,(SELECT id FROM clubs WHERE provider='football-data.org' AND provider_id=$9),(SELECT id FROM clubs WHERE provider='football-data.org' AND provider_id=$10),$11,$12,$13,$14) ON CONFLICT(provider,provider_id) DO UPDATE SET competition_id=excluded.competition_id,season_id=excluded.season_id,utc_date=excluded.utc_date,status=excluded.status,stage=excluded.stage,matchday=excluded.matchday,home_club_id=excluded.home_club_id,away_club_id=excluded.away_club_id,home_name=excluded.home_name,away_name=excluded.away_name,home_score=excluded.home_score,away_score=excluded.away_score,updated_at=now()`, uuid.New(), item.ProviderID, competitionID, seasonID, item.UTCDate, item.Status, item.Stage, item.Matchday, item.HomeProviderID, item.AwayProviderID, item.Home.Name, item.Away.Name, item.HomeScore, item.AwayScore)
+		var matchID uuid.UUID
+		err = tx.QueryRow(ctx, `INSERT INTO matches(id,provider,provider_id,competition_id,season_id,utc_date,status,stage,matchday,home_club_id,away_club_id,home_name,away_name,home_score,away_score) VALUES($1,'football-data.org',$2,$3,$4,$5,$6,$7,$8,(SELECT id FROM clubs WHERE provider='football-data.org' AND provider_id=$9),(SELECT id FROM clubs WHERE provider='football-data.org' AND provider_id=$10),$11,$12,$13,$14) ON CONFLICT(provider,provider_id) DO UPDATE SET competition_id=excluded.competition_id,season_id=excluded.season_id,utc_date=excluded.utc_date,status=excluded.status,stage=excluded.stage,matchday=excluded.matchday,home_club_id=excluded.home_club_id,away_club_id=excluded.away_club_id,home_name=excluded.home_name,away_name=excluded.away_name,home_score=excluded.home_score,away_score=excluded.away_score,updated_at=now() RETURNING id`, uuid.New(), item.ProviderID, competitionID, seasonID, item.UTCDate, item.Status, item.Stage, item.Matchday, item.HomeProviderID, item.AwayProviderID, item.Home.Name, item.Away.Name, item.HomeScore, item.AwayScore).Scan(&matchID)
 		if err != nil {
 			return 0, err
+		}
+		if item.Goals != nil {
+			if _, err = tx.Exec(ctx, `DELETE FROM match_goals WHERE match_id=$1`, matchID); err != nil {
+				return 0, err
+			}
+			for position, goal := range item.Goals {
+				if _, err = tx.Exec(ctx, `INSERT INTO match_goals(match_id,position,minute,injury_time,goal_type,team_provider_id,scorer_name) VALUES($1,$2,$3,$4,$5,$6,$7)`, matchID, position, goal.Minute, goal.InjuryTime, goal.Type, goal.TeamProviderID, goal.ScorerName); err != nil {
+					return 0, err
+				}
+			}
 		}
 	}
 	if len(standings) > 0 {

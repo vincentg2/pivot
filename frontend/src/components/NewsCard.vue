@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ArrowUpRight } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import type { NewsItem } from '@/lib/news'
 
 defineProps<{ item: NewsItem; showClub?: boolean }>()
+const { locale, t } = useI18n()
 </script>
 
 <template>
@@ -11,7 +13,7 @@ defineProps<{ item: NewsItem; showClub?: boolean }>()
       <span v-if="showClub">{{ item.clubTla || item.clubName }}</span>
       <span>{{ item.sourceName }}</span>
       <time :datetime="item.publishedAt">{{
-        new Date(item.publishedAt).toLocaleDateString()
+        new Date(item.publishedAt).toLocaleDateString(locale)
       }}</time>
     </div>
     <h3>
@@ -22,8 +24,8 @@ defineProps<{ item: NewsItem; showClub?: boolean }>()
       target="_blank"
       rel="noopener noreferrer"
       class="news-open"
-      :aria-label="`Read ${item.title} on ${item.sourceName}`"
-      >Read official source <ArrowUpRight :size="15"
+      :aria-label="t('news.readOn', { title: item.title, source: item.sourceName })"
+      >{{ t('news.readSource') }} <ArrowUpRight :size="15"
     /></a>
   </article>
 </template>

@@ -221,6 +221,35 @@ h3 {
   background: var(--soft);
   color: var(--accent);
 }
+.locale-switch {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-strong);
+}
+.locale-switch button {
+  min-width: 30px;
+  min-height: 28px;
+  padding: 0 0.35rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.65rem;
+  font-weight: 750;
+}
+.locale-switch button.active {
+  background: var(--paper-raised);
+  color: var(--ink);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.12);
+}
+.auth-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 .auth-page {
   display: grid;
   min-height: 100vh;
@@ -393,15 +422,17 @@ small {
   align-items: flex-start;
   gap: 2rem;
   border-radius: 20px;
+  border: 1px solid var(--line);
   background:
-    radial-gradient(circle at 88% 14%, rgb(198 255 61 / 0.3), transparent 17rem),
-    linear-gradient(135deg, #1738a3, #2457ff 58%, #4773ff);
-  color: white;
-  box-shadow: 0 24px 60px rgb(36 87 255 / 0.22);
+    radial-gradient(circle at 92% 4%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 22rem),
+    var(--paper-raised);
+  color: var(--ink);
+  box-shadow: var(--shadow-tight);
 }
 .welcome-row h1 {
   max-width: 850px;
   margin-bottom: 1.2rem;
+  font-size: clamp(2.2rem, 5vw, 3.75rem);
 }
 .welcome-row .eyebrow {
   color: var(--signal);
@@ -411,7 +442,7 @@ small {
 }
 .dashboard-date {
   margin: 0;
-  color: rgb(255 255 255 / 0.72);
+  color: var(--muted);
   font-size: 0.85rem;
   font-weight: 650;
 }
@@ -422,11 +453,11 @@ small {
   grid-column: 1 / -1;
   align-self: end;
   gap: 0.7rem;
-  border-top: 1px solid rgb(255 255 255 / 0.24);
+  border-top: 1px solid var(--line);
 }
 .recent-results > p {
   margin: 0;
-  color: rgb(255 255 255 / 0.68);
+  color: var(--muted);
   font-size: 0.7rem;
   font-weight: 700;
 }
@@ -437,7 +468,7 @@ small {
 .recent-result {
   min-width: 0;
   padding-inline: 1rem;
-  border-left: 1px solid rgb(255 255 255 / 0.18);
+  border-left: 1px solid var(--line);
 }
 .recent-result:first-child {
   padding-left: 0;
@@ -449,7 +480,7 @@ small {
 .recent-result time {
   display: block;
   margin-bottom: 0.45rem;
-  color: rgb(255 255 255 / 0.62);
+  color: var(--muted);
   font-size: 0.65rem;
   font-weight: 650;
 }
@@ -468,7 +499,7 @@ small {
   min-width: 0;
   align-items: center;
   gap: 0.5rem;
-  color: rgb(255 255 255 / 0.68);
+  color: var(--muted);
   font-size: 0.72rem;
 }
 .recent-team:last-child {
@@ -481,14 +512,23 @@ small {
   white-space: nowrap;
 }
 .recent-team.winner {
-  color: white;
+  color: var(--ink);
   font-weight: 750;
 }
 .recent-result .club-mark {
   width: 30px;
   height: 30px;
-  border-color: rgb(255 255 255 / 0.22);
-  background: rgb(255 255 255 / 0.94);
+  border-color: var(--line);
+  background: var(--paper-raised);
+}
+.recent-scorers {
+  margin: 0.5rem 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.62rem;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .avatar {
   display: inline-grid;
@@ -1715,7 +1755,7 @@ small {
   .recent-result {
     padding-inline: 0 1rem;
     border-left: 0;
-    border-right: 1px solid rgb(255 255 255 / 0.18);
+    border-right: 1px solid var(--line);
     scroll-snap-align: start;
   }
   .empty-hero {

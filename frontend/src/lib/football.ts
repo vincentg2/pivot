@@ -22,6 +22,13 @@ export interface FootballMatch {
   homeScore: number | null
   awayScore: number | null
   favorite: boolean
+  goals?: MatchGoal[] | null
+}
+export interface MatchGoal {
+  minute: number
+  injuryTime: number | null
+  type: 'REGULAR' | 'OWN' | 'PENALTY'
+  scorerName: string
 }
 export interface StandingRow {
   position: number

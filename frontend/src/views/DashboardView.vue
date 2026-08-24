@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ArrowRight, CalendarDays, ChevronDown, Newspaper, Radio, Trophy } from 'lucide-vue-next'
 import AvatarMonogram from '@/components/AvatarMonogram.vue'
 import ClubMark from '@/components/ClubMark.vue'
@@ -14,6 +15,7 @@ import { useSessionStore } from '@/stores/session'
 import { useFavoritesStore } from '@/stores/favorites'
 import type { NewsItem } from '@/lib/news'
 const session = useSessionStore()
+const { locale, t } = useI18n()
 const favorites = useFavoritesStore()
 const loadedMatches = ref<FootballMatch[]>([])
 const recentMatches = ref<FootballMatch[]>([])
@@ -29,7 +31,7 @@ const favoriteMatches = computed(() => filteredMatches.value.slice(0, visibleMat
 const recentResults = computed(() => latestFavoriteResults(recentMatches.value))
 const hasMoreMatches = computed(() => visibleMatchCount.value < filteredMatches.value.length)
 const todayLabel = computed(() =>
-  new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(
+  new Intl.DateTimeFormat(locale.value, { weekday: 'long', day: 'numeric', month: 'long' }).format(
     new Date(),
   ),
 )
@@ -57,7 +59,7 @@ watch(selectedClubId, () => (visibleMatchCount.value = matchBatchSize))
   <main class="dashboard page-width">
     <section class="welcome-row">
       <div>
-        <h1>Good evening, {{ session.user?.nickname }}.</h1>
+        <h1>{{ t('dashboard.greeting', { name: session.user?.nickname }) }}</h1>
         <p class="dashboard-date">{{ todayLabel }}</p>
       </div>
       <AvatarMonogram
@@ -67,7 +69,7 @@ watch(selectedClubId, () => (visibleMatchCount.value = matchBatchSize))
         size="lg"
       />
       <div v-if="recentResults.length" class="recent-results">
-        <p>Last results</p>
+        <p>{{ t('dashboard.recent') }}</p>
         <div class="recent-results-list">
           <RecentResult v-for="match in recentResults" :key="match.id" :match="match" />
         </div>
@@ -75,8 +77,8 @@ watch(selectedClubId, () => (visibleMatchCount.value = matchBatchSize))
     </section>
     <section v-if="news.length" class="dashboard-news">
       <div class="section-heading">
-        <h2>Latest club news</h2>
-        <RouterLink to="/news" class="text-link">All news</RouterLink>
+        <h2>{{ t('dashboard.latestNews') }}</h2>
+        <RouterLink to="/news" class="text-link">{{ t('dashboard.allNews') }}</RouterLink>
       </div>
       <div class="news-grid dashboard-news-grid">
         <NewsCard v-for="item in news" :key="item.id" :item="item" show-club />
@@ -84,17 +86,19 @@ watch(selectedClubId, () => (visibleMatchCount.value = matchBatchSize))
     </section>
     <section v-if="favorites.clubs.length" class="dashboard-matches">
       <div class="section-heading">
-        <h2>Upcoming matches <span>30 days</span></h2>
-        <RouterLink to="/matches" class="text-link">All matches</RouterLink>
+        <h2>
+          {{ t('dashboard.upcoming') }} <span>{{ t('dashboard.days') }}</span>
+        </h2>
+        <RouterLink to="/matches" class="text-link">{{ t('dashboard.allMatches') }}</RouterLink>
       </div>
-      <div class="favorite-club-filters" role="group" aria-label="Filter matches by favorite club">
+      <div class="favorite-club-filters" role="group" :aria-label="t('dashboard.filterFavorites')">
         <button
           type="button"
           :class="{ active: selectedClubId === null }"
           :aria-pressed="selectedClubId === null"
           @click="selectedClubId = null"
         >
-          All clubs
+          {{ t('dashboard.allClubs') }}
         </button>
         <button
           v-for="club in favorites.clubs"
@@ -119,19 +123,21 @@ watch(selectedClubId, () => (visibleMatchCount.value = matchBatchSize))
         />
       </div>
       <p v-else class="quiet dashboard-empty-line">
-        No matches synchronized for this selection in this period.
+        {{ t('dashboard.noMatches') }}
       </p>
       <div v-if="hasMoreMatches" class="dashboard-match-more">
         <button type="button" class="button secondary" @click="visibleMatchCount += matchBatchSize">
-          Show next matches <ChevronDown :size="17" />
+          {{ t('dashboard.showNext') }} <ChevronDown :size="17" />
         </button>
-        <span aria-live="polite">{{ favoriteMatches.length }} of {{ filteredMatches.length }}</span>
+        <span aria-live="polite"
+          >{{ favoriteMatches.length }} {{ t('common.of') }} {{ filteredMatches.length }}</span
+        >
       </div>
     </section>
     <section v-if="favorites.ready && favorites.clubs.length" class="favorite-dashboard">
       <div class="section-heading">
-        <h2>Favourite clubs</h2>
-        <RouterLink to="/clubs" class="text-link">Edit favorites</RouterLink>
+        <h2>{{ t('dashboard.favoriteClubs') }}</h2>
+        <RouterLink to="/clubs" class="text-link">{{ t('dashboard.editFavorites') }}</RouterLink>
       </div>
       <div class="favorite-strip">
         <RouterLink v-for="club in favorites.clubs" :key="club.id" :to="`/clubs/${club.id}`">
@@ -143,35 +149,35 @@ watch(selectedClubId, () => (visibleMatchCount.value = matchBatchSize))
     </section>
     <section v-else class="empty-hero">
       <div class="empty-icon"><Trophy :size="26" /></div>
-      <p class="eyebrow">Your starting eleven</p>
-      <h2>Choose the clubs you care about</h2>
-      <p>Browse the club catalog and select up to five favorites for your dashboard.</p>
+      <p class="eyebrow">{{ t('dashboard.startingEleven') }}</p>
+      <h2>{{ t('dashboard.chooseClubs') }}</h2>
+      <p>{{ t('dashboard.chooseIntro') }}</p>
       <RouterLink to="/clubs" class="button primary"
-        >Explore clubs <ArrowRight :size="16"
+        >{{ t('dashboard.explore') }} <ArrowRight :size="16"
       /></RouterLink>
     </section>
-    <section class="preview-grid" aria-label="Upcoming Pivot sections">
+    <section class="preview-grid" :aria-label="t('dashboard.sections')">
       <RouterLink to="/matches" class="preview-card">
         <CalendarDays />
-        <h3>Matches</h3>
-        <p>Yesterday, today, tomorrow and the next seven days.</p>
+        <h3>{{ t('nav.matches') }}</h3>
+        <p>{{ t('dashboard.matchesIntro') }}</p>
       </RouterLink>
       <RouterLink to="/tv" class="preview-card">
         <Radio />
-        <h3>TV schedule</h3>
-        <p>French listings, centrally collected with operator consent.</p>
+        <h3>{{ t('tv.title') }}</h3>
+        <p>{{ t('dashboard.tvIntro') }}</p>
       </RouterLink>
       <RouterLink to="/standings" class="preview-card">
         <Trophy />
-        <h3>Tables</h3>
-        <p>Domestic standings with clear source attribution.</p>
+        <h3>{{ t('tables.title') }}</h3>
+        <p>{{ t('dashboard.tablesIntro') }}</p>
       </RouterLink>
       <RouterLink to="/news" class="preview-card">
         <Newspaper />
-        <h3>News</h3>
-        <p>Club headlines and links, retained for thirty days.</p>
+        <h3>{{ t('news.title') }}</h3>
+        <p>{{ t('dashboard.newsIntro') }}</p>
       </RouterLink>
     </section>
-    <p class="attribution">Football data provided by football-data.org.</p>
+    <p class="attribution">{{ t('common.footballAttribution') }}</p>
   </main>
 </template>

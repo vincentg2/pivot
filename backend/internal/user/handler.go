@@ -15,18 +15,19 @@ func NewHandler(service *Service) *Handler { return &Handler{service: service} }
 type updateRequest struct {
 	Nickname string `json:"nickname" validate:"required,min=2,max=40"`
 	Theme    string `json:"theme" validate:"required,oneof=system light dark"`
+	Locale   string `json:"locale" validate:"required,oneof=fr en"`
 }
 
 func (h *Handler) Update(c echo.Context) error {
 	var request updateRequest
 	if err := c.Bind(&request); err != nil || c.Validate(request) != nil {
-		return httpx.NewProblem(400, "Invalid profile", "Nickname and theme are invalid.")
+		return httpx.NewProblem(400, "Invalid profile", "Nickname, theme, or language is invalid.")
 	}
 	current, _ := auth.UserFromContext(c)
-	if err := h.service.UpdateProfile(c.Request().Context(), current.ID, request.Nickname, request.Theme); err != nil {
+	if err := h.service.UpdateProfile(c.Request().Context(), current.ID, request.Nickname, request.Theme, request.Locale); err != nil {
 		return err
 	}
-	current.Nickname, current.Theme = request.Nickname, request.Theme
+	current.Nickname, current.Theme, current.Locale = request.Nickname, request.Theme, request.Locale
 	return c.JSON(http.StatusOK, map[string]any{"user": current})
 }
 

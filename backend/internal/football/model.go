@@ -51,6 +51,15 @@ type Match struct {
 	HomeScore      *int        `json:"homeScore"`
 	AwayScore      *int        `json:"awayScore"`
 	Favorite       bool        `json:"favorite"`
+	Goals          []Goal      `json:"goals"`
+}
+
+type Goal struct {
+	Minute         int    `json:"minute"`
+	InjuryTime     *int   `json:"injuryTime"`
+	Type           string `json:"type"`
+	TeamProviderID int    `json:"-"`
+	ScorerName     string `json:"scorerName"`
 }
 
 type StandingRow struct {

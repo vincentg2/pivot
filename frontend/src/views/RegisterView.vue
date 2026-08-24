@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import AuthLayout from '@/components/AuthLayout.vue'
 import { ApiError } from '@/lib/api'
 import { useSessionStore } from '@/stores/session'
@@ -10,6 +11,7 @@ const error = ref('')
 const submitting = ref(false)
 const session = useSessionStore()
 const router = useRouter()
+const { t } = useI18n()
 async function submit() {
   submitting.value = true
   error.value = ''
@@ -17,7 +19,7 @@ async function submit() {
     await session.register(form)
     await router.push('/')
   } catch (caught) {
-    error.value = caught instanceof ApiError ? caught.message : 'Unable to create the account.'
+    error.value = caught instanceof ApiError ? caught.message : t('auth.createFailed')
   } finally {
     submitting.value = false
   }
@@ -26,42 +28,50 @@ async function submit() {
 
 <template>
   <AuthLayout
-    eyebrow="By invitation"
-    title="A better view of the week in football."
-    intro="Fixtures, results and the stories around your clubs — shaped around you."
+    :eyebrow="t('auth.invitationEyebrow')"
+    :title="t('auth.invitationTitle')"
+    :intro="t('auth.invitationIntro')"
   >
     <div class="form-heading">
-      <p class="eyebrow">Join Pivot</p>
-      <h2>Create your account</h2>
-      <p>Your invitation may have an expiry or usage limit.</p>
+      <p class="eyebrow">{{ t('auth.join') }}</p>
+      <h2>{{ t('auth.accountTitle') }}</h2>
+      <p>{{ t('auth.invitationHelp') }}</p>
     </div>
     <form class="form-stack" @submit.prevent="submit">
       <p v-if="error" class="form-error" role="alert">{{ error }}</p>
       <label
-        >Invitation code<input v-model="form.invitationCode" autocomplete="one-time-code" required
+        >{{ t('auth.invitationCode')
+        }}<input v-model="form.invitationCode" autocomplete="one-time-code" required
       /></label>
       <label
-        >Nickname<input
+        >{{ t('auth.nickname')
+        }}<input
           v-model="form.nickname"
           autocomplete="nickname"
           minlength="2"
           maxlength="40"
           required
       /></label>
-      <label>Email<input v-model="form.email" type="email" autocomplete="email" required /></label>
       <label
-        >Password<input
+        >{{ t('auth.email')
+        }}<input v-model="form.email" type="email" autocomplete="email" required
+      /></label>
+      <label
+        >{{ t('auth.password')
+        }}<input
           v-model="form.password"
           type="password"
           autocomplete="new-password"
           minlength="12"
           required
-        /><small>At least 12 characters.</small></label
+        /><small>{{ t('auth.passwordHelp') }}</small></label
       >
       <button class="button primary" type="submit" :disabled="submitting">
-        {{ submitting ? 'Creating…' : 'Create account' }}
+        {{ submitting ? t('auth.creating') : t('auth.createAccount') }}
       </button>
     </form>
-    <p class="form-foot">Already a member? <RouterLink to="/login">Sign in</RouterLink></p>
+    <p class="form-foot">
+      {{ t('auth.alreadyMember') }} <RouterLink to="/login">{{ t('auth.signIn') }}</RouterLink>
+    </p>
   </AuthLayout>
 </template>

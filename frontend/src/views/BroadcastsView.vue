@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ExternalLink, Radio, Tv } from 'lucide-vue-next'
 import ChannelMark from '@/components/ChannelMark.vue'
 import { api } from '@/lib/api'
@@ -10,6 +11,7 @@ const listings = ref<BroadcastListing[]>([])
 const from = ref(localDate(new Date()))
 const to = ref(localDate(addDays(new Date(), 7)))
 const loading = ref(true)
+const { locale, t } = useI18n()
 const grouped = computed(() => {
   const groups = new Map<string, BroadcastListing[]>()
   for (const listing of listings.value) {
@@ -38,7 +40,7 @@ function chooseTwoMonths() {
   void load()
 }
 function dateHeading(value: string) {
-  return new Intl.DateTimeFormat('en-GB', {
+  return new Intl.DateTimeFormat(locale.value, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -50,21 +52,21 @@ onMounted(load)
 <template>
   <main class="broadcast-page page-width">
     <header class="matches-heading broadcast-heading">
-      <h1>TV schedule</h1>
+      <h1>{{ t('tv.title') }}</h1>
       <Tv :size="44" aria-hidden="true" />
     </header>
     <section class="date-presets" aria-label="TV schedule date range">
-      <button @click="choose(new Date(), 0)">Today</button>
-      <button @click="choose(addDays(new Date(), 1), 0)">Tomorrow</button>
-      <button @click="choose(new Date(), 7)">Next 7 days</button>
-      <button @click="chooseTwoMonths">Next 2 months</button>
+      <button @click="choose(new Date(), 0)">{{ t('tv.today') }}</button>
+      <button @click="choose(addDays(new Date(), 1), 0)">{{ t('tv.tomorrow') }}</button>
+      <button @click="choose(new Date(), 7)">{{ t('tv.next7') }}</button>
+      <button @click="chooseTwoMonths">{{ t('tv.next2Months') }}</button>
     </section>
-    <p v-if="loading" class="catalog-state">Loading the TV schedule…</p>
+    <p v-if="loading" class="catalog-state">{{ t('tv.loading') }}</p>
     <div v-else-if="grouped.length" class="broadcast-groups">
       <section v-for="[date, items] in grouped" :key="date">
         <div class="match-date">
           <h2>{{ dateHeading(date) }}</h2>
-          <span>{{ items.length }} broadcasts</span>
+          <span>{{ t('tv.count', { count: items.length }) }}</span>
         </div>
         <article v-for="listing in items" :key="listing.id" class="broadcast-row">
           <time :datetime="listing.startsAt">{{ listingTime(listing.startsAt) }}</time>
@@ -76,7 +78,7 @@ onMounted(load)
                 ><Radio :size="13" /> External listing</span
               >
             </div>
-            <span>{{ listing.competitionName || 'Competition not identified' }}</span>
+            <span>{{ listing.competitionName || t('tv.competitionUnknown') }}</span>
           </div>
           <div class="channel-list">
             <ChannelMark v-for="channel in listing.channels" :key="channel" :channel="channel" />
@@ -87,7 +89,7 @@ onMounted(load)
             target="_blank"
             rel="noopener noreferrer"
             class="icon-link"
-            aria-label="Open this listing on Footao"
+            :aria-label="t('tv.openFootao')"
             ><ExternalLink :size="17"
           /></a>
         </article>
@@ -95,8 +97,8 @@ onMounted(load)
     </div>
     <section v-else class="empty-hero matches-empty">
       <Tv :size="28" />
-      <h2>No broadcasts in this window</h2>
-      <p>The connector may be disabled, or the schedule has not been collected yet.</p>
+      <h2>{{ t('tv.empty') }}</h2>
+      <p>{{ t('tv.emptyHelp') }}</p>
     </section>
     <p class="attribution">
       French TV schedule provided by

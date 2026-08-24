@@ -14,6 +14,7 @@ type User struct {
 	Nickname     string    `json:"nickname"`
 	AvatarSeed   string    `json:"avatarSeed"`
 	Theme        string    `json:"theme"`
+	Locale       string    `json:"locale"`
 	Role         string    `json:"role"`
 	CreatedAt    time.Time `json:"createdAt"`
 }

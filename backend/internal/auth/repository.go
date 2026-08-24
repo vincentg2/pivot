@@ -23,7 +23,7 @@ func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
 
 func scanUser(row pgx.Row) (User, error) {
 	var user User
-	err := row.Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Nickname, &user.AvatarSeed, &user.Theme, &user.Role, &user.CreatedAt)
+	err := row.Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Nickname, &user.AvatarSeed, &user.Theme, &user.Locale, &user.Role, &user.CreatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return User{}, ErrNotFound
 	}
@@ -31,11 +31,11 @@ func scanUser(row pgx.Row) (User, error) {
 }
 
 func (r *PostgresRepository) FindUserByEmail(ctx context.Context, email string) (User, error) {
-	return scanUser(r.pool.QueryRow(ctx, `SELECT id,email,password_hash,nickname,avatar_seed,theme,role,created_at FROM users WHERE email=$1`, email))
+	return scanUser(r.pool.QueryRow(ctx, `SELECT id,email,password_hash,nickname,avatar_seed,theme,locale,role,created_at FROM users WHERE email=$1`, email))
 }
 
 func (r *PostgresRepository) FindUserByID(ctx context.Context, id uuid.UUID) (User, error) {
-	return scanUser(r.pool.QueryRow(ctx, `SELECT id,email,password_hash,nickname,avatar_seed,theme,role,created_at FROM users WHERE id=$1`, id))
+	return scanUser(r.pool.QueryRow(ctx, `SELECT id,email,password_hash,nickname,avatar_seed,theme,locale,role,created_at FROM users WHERE id=$1`, id))
 }
 
 func (r *PostgresRepository) RegisterWithInvitation(ctx context.Context, input NewUser, codeHash []byte, now time.Time) (User, error) {
@@ -53,7 +53,7 @@ func (r *PostgresRepository) RegisterWithInvitation(ctx context.Context, input N
 		return User{}, err
 	}
 	input.InvitationID = invitationID
-	user, err := scanUser(tx.QueryRow(ctx, `INSERT INTO users(id,email,password_hash,nickname,avatar_seed) VALUES($1,$2,$3,$4,$5) RETURNING id,email,password_hash,nickname,avatar_seed,theme,role,created_at`, input.ID, input.Email, input.PasswordHash, input.Nickname, input.AvatarSeed))
+	user, err := scanUser(tx.QueryRow(ctx, `INSERT INTO users(id,email,password_hash,nickname,avatar_seed) VALUES($1,$2,$3,$4,$5) RETURNING id,email,password_hash,nickname,avatar_seed,theme,locale,role,created_at`, input.ID, input.Email, input.PasswordHash, input.Nickname, input.AvatarSeed))
 	if err != nil {
 		if pgErr := new(pgconn.PgError); errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return User{}, ErrEmailTaken
@@ -82,7 +82,7 @@ func (r *PostgresRepository) CreateSession(ctx context.Context, userID uuid.UUID
 }
 
 func (r *PostgresRepository) FindUserBySession(ctx context.Context, hash []byte) (User, error) {
-	return scanUser(r.pool.QueryRow(ctx, `SELECT u.id,u.email,u.password_hash,u.nickname,u.avatar_seed,u.theme,u.role,u.created_at FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=$1 AND s.expires_at>now()`, hash))
+	return scanUser(r.pool.QueryRow(ctx, `SELECT u.id,u.email,u.password_hash,u.nickname,u.avatar_seed,u.theme,u.locale,u.role,u.created_at FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=$1 AND s.expires_at>now()`, hash))
 }
 
 func (r *PostgresRepository) DeleteSession(ctx context.Context, hash []byte) error {

@@ -32,7 +32,7 @@ func (f *fakeRepository) FindUserByEmail(context.Context, string) (User, error) 
 func (f *fakeRepository) FindUserByID(context.Context, uuid.UUID) (User, error) { return f.user, nil }
 func (f *fakeRepository) RegisterWithInvitation(_ context.Context, input NewUser, hash []byte, _ time.Time) (User, error) {
 	f.invitationHash = hash
-	f.user = User{ID: input.ID, Email: input.Email, PasswordHash: input.PasswordHash, Nickname: input.Nickname, AvatarSeed: input.AvatarSeed, Theme: "system", Role: "user"}
+	f.user = User{ID: input.ID, Email: input.Email, PasswordHash: input.PasswordHash, Nickname: input.Nickname, AvatarSeed: input.AvatarSeed, Theme: "system", Locale: "fr", Role: "user"}
 	return f.user, nil
 }
 func (f *fakeRepository) CreateSession(_ context.Context, _ uuid.UUID, hash []byte, expires time.Time, _, _ string) error {

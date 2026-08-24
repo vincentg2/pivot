@@ -7,6 +7,6 @@ import (
 )
 
 type Repository interface {
-	UpdateProfile(context.Context, uuid.UUID, string, string) error
+	UpdateProfile(context.Context, uuid.UUID, string, string, string) error
 	DeleteAccount(context.Context, uuid.UUID) error
 }

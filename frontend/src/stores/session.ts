@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { api } from '@/lib/api'
+import { applyLocale, type Locale } from '@/i18n'
 
 export type Theme = 'system' | 'light' | 'dark'
 export interface User {
@@ -8,6 +9,7 @@ export interface User {
   nickname: string
   avatarSeed: string
   theme: Theme
+  locale: Locale
   role: 'user' | 'admin'
   createdAt: string
 }
@@ -26,6 +28,7 @@ export const useSessionStore = defineStore('session', {
       try {
         this.user = (await api<{ user: User }>('/auth/me')).user
         applyTheme(this.user.theme)
+        applyLocale(this.user.locale)
       } catch {
         this.user = null
         applyTheme('system')
@@ -41,6 +44,7 @@ export const useSessionStore = defineStore('session', {
         })
       ).user
       applyTheme(this.user.theme)
+      applyLocale(this.user.locale)
     },
     async register(payload: {
       email: string
@@ -56,14 +60,15 @@ export const useSessionStore = defineStore('session', {
       this.user = null
       applyTheme('system')
     },
-    async updateProfile(nickname: string, theme: Theme) {
+    async updateProfile(nickname: string, theme: Theme, locale: Locale) {
       this.user = (
         await api<{ user: User }>('/profile', {
           method: 'PATCH',
-          body: JSON.stringify({ nickname, theme }),
+          body: JSON.stringify({ nickname, theme, locale }),
         })
       ).user
       applyTheme(theme)
+      applyLocale(locale)
     },
     async deleteAccount() {
       await api('/profile', { method: 'DELETE' })

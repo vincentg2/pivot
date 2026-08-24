@@ -13,12 +13,13 @@ import (
 
 type FootballDataConnector struct {
 	apiKey  string
+	baseURL string
 	client  *http.Client
 	limiter *rate.Limiter
 }
 
 func NewFootballDataConnector(apiKey string) *FootballDataConnector {
-	return &FootballDataConnector{apiKey: apiKey, client: &http.Client{Timeout: 20 * time.Second}, limiter: rate.NewLimiter(rate.Every(7*time.Second), 1)}
+	return &FootballDataConnector{apiKey: apiKey, baseURL: "https://api.football-data.org/v4", client: &http.Client{Timeout: 20 * time.Second}, limiter: rate.NewLimiter(rate.Every(7*time.Second), 1)}
 }
 func (c *FootballDataConnector) Enabled() bool { return c.apiKey != "" }
 
@@ -35,6 +36,12 @@ func (c *FootballDataConnector) FetchMatches(ctx context.Context, code string, f
 			Score              struct {
 				FullTime struct{ Home, Away *int } `json:"fullTime"`
 			} `json:"score"`
+			Goals []struct {
+				Minute, InjuryTime *int
+				Type               string
+				Team               struct{ ID int }
+				Scorer             struct{ Name string }
+			} `json:"goals"`
 		} `json:"matches"`
 	}
 	if err := c.get(ctx, "/competitions/"+code+"/matches?"+query.Encode(), &payload); err != nil {
@@ -44,7 +51,17 @@ func (c *FootballDataConnector) FetchMatches(ctx context.Context, code string, f
 	var season Season
 	for _, source := range payload.Matches {
 		season = source.Season.model()
-		items = append(items, Match{ProviderID: source.ID, Season: season, UTCDate: source.UTCDate, Status: source.Status, Stage: source.Stage, Matchday: source.Matchday, Home: source.HomeTeam.ref(), Away: source.AwayTeam.ref(), HomeProviderID: source.HomeTeam.ID, AwayProviderID: source.AwayTeam.ID, HomeScore: source.Score.FullTime.Home, AwayScore: source.Score.FullTime.Away})
+		var goals []Goal
+		if source.Goals != nil {
+			goals = make([]Goal, 0, len(source.Goals))
+			for _, goal := range source.Goals {
+				if goal.Minute == nil || goal.Scorer.Name == "" {
+					continue
+				}
+				goals = append(goals, Goal{Minute: *goal.Minute, InjuryTime: goal.InjuryTime, Type: goal.Type, TeamProviderID: goal.Team.ID, ScorerName: goal.Scorer.Name})
+			}
+		}
+		items = append(items, Match{ProviderID: source.ID, Season: season, UTCDate: source.UTCDate, Status: source.Status, Stage: source.Stage, Matchday: source.Matchday, Home: source.HomeTeam.ref(), Away: source.AwayTeam.ref(), HomeProviderID: source.HomeTeam.ID, AwayProviderID: source.AwayTeam.ID, HomeScore: source.Score.FullTime.Home, AwayScore: source.Score.FullTime.Away, Goals: goals})
 	}
 	return season, items, nil
 }
@@ -84,11 +101,12 @@ func (c *FootballDataConnector) get(ctx context.Context, path string, destinatio
 	if err := c.limiter.Wait(ctx); err != nil {
 		return err
 	}
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.football-data.org/v4"+path, nil)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+path, nil)
 	if err != nil {
 		return err
 	}
 	request.Header.Set("X-Auth-Token", c.apiKey)
+	request.Header.Set("X-Unfold-Goals", "true")
 	request.Header.Set("User-Agent", "Pivot/0.3")
 	response, err := c.client.Do(request)
 	if err != nil {
