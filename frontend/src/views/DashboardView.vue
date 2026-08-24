@@ -1,8 +1,15 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { ArrowRight, CalendarDays, Radio, Trophy } from 'lucide-vue-next'
 import AvatarMonogram from '@/components/AvatarMonogram.vue'
+import ClubMark from '@/components/ClubMark.vue'
 import { useSessionStore } from '@/stores/session'
+import { useFavoritesStore } from '@/stores/favorites'
 const session = useSessionStore()
+const favorites = useFavoritesStore()
+onMounted(() => {
+  if (!favorites.ready) void favorites.load()
+})
 </script>
 
 <template>
@@ -20,15 +27,30 @@ const session = useSessionStore()
         size="lg"
       />
     </section>
-    <section class="empty-hero">
+    <section v-if="favorites.ready && favorites.clubs.length" class="favorite-dashboard">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Your clubs</p>
+          <h2>Close to home</h2>
+        </div>
+        <RouterLink to="/clubs" class="text-link">Edit favorites</RouterLink>
+      </div>
+      <div class="favorite-strip">
+        <RouterLink v-for="club in favorites.clubs" :key="club.id" :to="`/clubs/${club.id}`">
+          <ClubMark :name="club.name" :tla="club.tla" :crest-url="club.crestUrl" />
+          <span>{{ club.shortName || club.name }}</span
+          ><ArrowRight :size="15" />
+        </RouterLink>
+      </div>
+    </section>
+    <section v-else class="empty-hero">
       <div class="empty-icon"><Trophy :size="26" /></div>
       <p class="eyebrow">Your starting eleven</p>
       <h2>Choose the clubs you care about</h2>
-      <p>
-        Club catalog and up to five favorites arrive in milestone two. Your private profile is ready
-        for them.
-      </p>
-      <span class="button disabled">Coming next <ArrowRight :size="16" /></span>
+      <p>Browse the club catalog and select up to five favorites for your dashboard.</p>
+      <RouterLink to="/clubs" class="button primary"
+        >Explore clubs <ArrowRight :size="16"
+      /></RouterLink>
     </section>
     <section class="preview-grid" aria-label="Upcoming Pivot sections">
       <article>

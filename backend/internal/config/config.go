@@ -8,14 +8,15 @@ import (
 )
 
 type Config struct {
-	Environment       string
-	Address           string
-	BaseURL           string
-	DatabaseURL       string
-	SessionCookieName string
-	SessionSecure     bool
-	SessionTTL        time.Duration
-	LoginRateLimit    int
+	Environment        string
+	Address            string
+	BaseURL            string
+	DatabaseURL        string
+	SessionCookieName  string
+	SessionSecure      bool
+	SessionTTL         time.Duration
+	LoginRateLimit     int
+	FootballDataAPIKey string
 }
 
 func Load() (Config, error) {
@@ -32,14 +33,15 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("LOGIN_RATE_LIMIT must be a positive integer")
 	}
 	cfg := Config{
-		Environment:       env("APP_ENV", "development"),
-		Address:           env("APP_ADDR", ":8080"),
-		BaseURL:           env("APP_BASE_URL", "http://localhost:5173"),
-		DatabaseURL:       os.Getenv("DATABASE_URL"),
-		SessionCookieName: env("SESSION_COOKIE_NAME", "pivot_session"),
-		SessionSecure:     secure,
-		SessionTTL:        ttl,
-		LoginRateLimit:    limit,
+		Environment:        env("APP_ENV", "development"),
+		Address:            env("APP_ADDR", ":8080"),
+		BaseURL:            env("APP_BASE_URL", "http://localhost:5173"),
+		DatabaseURL:        os.Getenv("DATABASE_URL"),
+		SessionCookieName:  env("SESSION_COOKIE_NAME", "pivot_session"),
+		SessionSecure:      secure,
+		SessionTTL:         ttl,
+		LoginRateLimit:     limit,
+		FootballDataAPIKey: os.Getenv("FOOTBALL_DATA_API_KEY"),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("DATABASE_URL is required")

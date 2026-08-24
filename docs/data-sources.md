@@ -4,7 +4,7 @@
 
 The primary catalog connector supports competitions available to the operator's plan. Each installation supplies its own API key. With no key, Pivot stays usable for authentication, profiles, manually configured favorites, and administration. Provider attribution must remain visible wherever its data appears.
 
-Remote badge display is an operator setting. Images are linked from the provider and never copied into the repository. A generated monogram is the default fallback.
+Remote badge display is an operator setting (`VITE_REMOTE_LOGOS_ENABLED=false` by default). Images are linked from the provider and never copied into the repository. A generated monogram is the default fallback. Catalog collection is launched from the administration screen and its latest outcome is retained locally.
 
 Suggested schedule: club catalog weekly; fixtures and standings four times daily. Past seasons are retained.
 

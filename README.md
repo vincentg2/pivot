@@ -4,9 +4,9 @@ Pivot is a private, invitation-only football dashboard for friends and a self-ho
 
 > **Français :** Pivot est un tableau de bord football privé et responsive, accessible sur invitation. Le projet est auto-hébergeable ; les connecteurs de données restent optionnels et chaque opérateur fournit ses propres accès.
 
-## Milestone 1
+## Milestones 1–2
 
-The initial foundation includes the Vue/Go monorepo, responsive theme system, PostgreSQL schema, opaque cookie sessions, invitation registration, login/logout, profile preferences, account deletion, admin invitation management, health endpoint, OpenAPI draft, unit tests, CI, and development tooling.
+The foundation includes the Vue/Go monorepo, responsive theme system, PostgreSQL, opaque cookie sessions, invitation registration, profiles, account deletion, administration, tests, CI, and development tooling. Milestone two adds a local club catalog, club profiles, up to five synchronized favorites, and an operator-controlled football-data.org collection.
 
 ## Architecture
 
@@ -32,6 +32,8 @@ The frontend runs at `http://localhost:5173` and proxies `/api` to the backend a
 
 Run all checks with `just check`. Create an admin interactively with `just create-admin email@example.com nickname`.
 
+The application works with an empty catalog and no provider key. To populate the five major European leagues, set `FOOTBALL_DATA_API_KEY` in `.env`, restart the API, then use **Admin → Data collection → Run now**. Remote crest rendering remains off unless the operator explicitly sets `VITE_REMOTE_LOGOS_ENABLED=true`; URLs are stored, but images are never distributed with Pivot.
+
 ## Self-hosting with Docker Compose
 
 The checked-in Compose file intentionally runs PostgreSQL only for local development. A production Compose profile and first-install web assistant will land before the first public release. Until then, build `frontend/` as static assets, run the Go API behind TLS, set a strong PostgreSQL password, and set `SESSION_SECURE=true`.
@@ -42,4 +44,4 @@ Pivot works without data-provider keys. Read [data source policy](docs/data-sour
 
 ## Status
 
-Milestone 1 of 5. The repository remains private until the owner explicitly decides to publish it.
+Milestone 2 of 5. The repository remains private until the owner explicitly decides to publish it.

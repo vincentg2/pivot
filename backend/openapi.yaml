@@ -43,6 +43,47 @@ paths:
       summary: Permanently delete the current account
       security: [{cookieSession: []}]
       responses: {'204': {description: Deleted}}
+  /competitions:
+    get:
+      summary: List locally synchronized competitions
+      security: [{cookieSession: []}]
+      responses: {'200': {description: Competition catalog and attribution}}
+  /clubs:
+    get:
+      summary: List clubs, optionally filtered by competition code
+      parameters:
+        - {name: competition, in: query, schema: {type: string}}
+      security: [{cookieSession: []}]
+      responses: {'200': {description: Club catalog and attribution}}
+  /clubs/{id}:
+    get:
+      summary: Read a club profile
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      security: [{cookieSession: []}]
+      responses:
+        '200': {description: Club profile and attribution}
+        '404': {$ref: '#/components/responses/Problem'}
+  /favorites:
+    get:
+      summary: List the current user's favorite clubs
+      security: [{cookieSession: []}]
+      responses: {'200': {description: Ordered favorite clubs}}
+    put:
+      summary: Replace the current user's favorite clubs
+      security: [{cookieSession: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [clubIds]
+              properties:
+                clubIds: {type: array, maxItems: 5, uniqueItems: true, items: {type: string, format: uuid}}
+      responses:
+        '200': {description: Updated favorite clubs}
+        '422': {$ref: '#/components/responses/Problem'}
   /admin/invitations:
     get:
       summary: List invitations
@@ -52,6 +93,18 @@ paths:
       summary: Create an invitation and return its code once
       security: [{cookieSession: []}]
       responses: {'201': {description: Created}}
+  /admin/collections/football-data:
+    get:
+      summary: Read connector configuration and latest collection status
+      security: [{cookieSession: []}]
+      responses: {'200': {description: Connector status}}
+    post:
+      summary: Run a synchronous catalog collection for the five major leagues
+      security: [{cookieSession: []}]
+      responses:
+        '200': {description: Collection completed}
+        '409': {$ref: '#/components/responses/Problem'}
+        '502': {$ref: '#/components/responses/Problem'}
 components:
   securitySchemes:
     cookieSession: {type: apiKey, in: cookie, name: pivot_session}

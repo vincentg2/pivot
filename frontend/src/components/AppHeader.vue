@@ -17,6 +17,7 @@ async function logout() {
       ><span class="brand-mark">P</span><span>Pivot</span></RouterLink
     >
     <nav aria-label="Account navigation">
+      <RouterLink to="/clubs" class="text-link">Clubs</RouterLink>
       <RouterLink v-if="session.user?.role === 'admin'" to="/admin" class="text-link"
         >Admin</RouterLink
       >

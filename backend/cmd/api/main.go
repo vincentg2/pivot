@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/vincentg2/pivot/backend/internal/auth"
+	"github.com/vincentg2/pivot/backend/internal/catalog"
 	"github.com/vincentg2/pivot/backend/internal/config"
 	"github.com/vincentg2/pivot/backend/internal/database"
 	"github.com/vincentg2/pivot/backend/internal/httpx"
@@ -42,6 +43,8 @@ func main() {
 	authHandler := auth.NewHandler(authService, cfg.SessionCookieName, cfg.SessionSecure, cfg.SessionTTL)
 	inviteHandler := invitation.NewHandler(invitation.NewService(invitation.NewPostgresRepository(pool)))
 	userHandler := user.NewHandler(user.NewService(user.NewPostgresRepository(pool)))
+	catalogService := catalog.NewService(catalog.NewPostgresRepository(pool), catalog.NewFootballDataConnector(cfg.FootballDataAPIKey))
+	catalogHandler := catalog.NewHandler(catalogService, logger)
 
 	e := echo.New()
 	e.HideBanner = true
@@ -76,10 +79,17 @@ func main() {
 	api.GET("/auth/me", authHandler.Me, authHandler.RequireSession)
 	api.PATCH("/profile", userHandler.Update, authHandler.RequireSession)
 	api.DELETE("/profile", userHandler.Delete, authHandler.RequireSession)
+	api.GET("/competitions", catalogHandler.Competitions, authHandler.RequireSession)
+	api.GET("/clubs", catalogHandler.Clubs, authHandler.RequireSession)
+	api.GET("/clubs/:id", catalogHandler.Club, authHandler.RequireSession)
+	api.GET("/favorites", catalogHandler.Favorites, authHandler.RequireSession)
+	api.PUT("/favorites", catalogHandler.ReplaceFavorites, authHandler.RequireSession)
 	admin := api.Group("/admin", authHandler.RequireAdmin)
 	admin.GET("/invitations", inviteHandler.List)
 	admin.POST("/invitations", inviteHandler.Create)
 	admin.DELETE("/invitations/:id", inviteHandler.Revoke)
+	admin.GET("/collections/football-data", catalogHandler.CollectionStatus)
+	admin.POST("/collections/football-data", catalogHandler.Sync)
 
 	go func() {
 		logger.Info("server starting", "address", cfg.Address, "environment", cfg.Environment)

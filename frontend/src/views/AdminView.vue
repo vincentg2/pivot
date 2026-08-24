@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import { Copy, Plus, X } from 'lucide-vue-next'
+import { Copy, Plus, RefreshCw, X } from 'lucide-vue-next'
 import { api } from '@/lib/api'
 
 interface Invitation {
@@ -16,10 +16,37 @@ const invitations = ref<Invitation[]>([])
 const revealedCode = ref('')
 const loading = ref(true)
 const form = reactive({ label: '', maxUses: 1, expiresAt: '' })
+interface CollectionRun {
+  status: string
+  recordsCount: number
+  startedAt: string
+  finishedAt: string | null
+  errorMessage?: string
+}
+const collection = ref<{ enabled: boolean; latestRun: CollectionRun | null } | null>(null)
+const syncing = ref(false)
+const syncError = ref('')
 async function load() {
   loading.value = true
   invitations.value = (await api<{ invitations: Invitation[] }>('/admin/invitations')).invitations
   loading.value = false
+}
+async function loadCollection() {
+  collection.value = await api<{ enabled: boolean; latestRun: CollectionRun | null }>(
+    '/admin/collections/football-data',
+  )
+}
+async function synchronize() {
+  syncing.value = true
+  syncError.value = ''
+  try {
+    await api('/admin/collections/football-data', { method: 'POST' })
+    await loadCollection()
+  } catch (error) {
+    syncError.value = error instanceof Error ? error.message : 'Synchronization failed.'
+  } finally {
+    syncing.value = false
+  }
 }
 async function create() {
   const response = await api<{ code: string }>('/admin/invitations', {
@@ -43,7 +70,9 @@ async function revoke(id: string) {
 async function copyCode() {
   await navigator.clipboard.writeText(revealedCode.value)
 }
-onMounted(load)
+onMounted(() => {
+  void Promise.all([load(), loadCollection()])
+})
 </script>
 
 <template>
@@ -53,6 +82,32 @@ onMounted(load)
       <h1>Invitations</h1>
       <p>Control access with expiring, limited-use codes.</p>
     </header>
+    <section class="settings-card collection-card">
+      <div>
+        <p class="eyebrow">Data collection</p>
+        <h2>football-data.org</h2>
+        <p v-if="collection?.enabled" class="quiet">Connector enabled for this installation.</p>
+        <p v-else class="quiet">
+          Connector disabled. Add <code>FOOTBALL_DATA_API_KEY</code> to the local environment to
+          enable it.
+        </p>
+        <p v-if="collection?.latestRun" class="collection-status">
+          <span class="status">{{ collection.latestRun.status }}</span>
+          {{ collection.latestRun.recordsCount }} clubs ·
+          {{ new Date(collection.latestRun.startedAt).toLocaleString() }}
+        </p>
+        <p v-if="syncError" class="form-error" role="alert">{{ syncError }}</p>
+      </div>
+      <button
+        class="button secondary"
+        :disabled="!collection?.enabled || syncing"
+        @click="synchronize"
+      >
+        <RefreshCw :size="17" :class="{ spinning: syncing }" />{{
+          syncing ? 'Synchronizing…' : 'Run now'
+        }}
+      </button>
+    </section>
     <section class="settings-card admin-create">
       <h2>Create an invitation</h2>
       <form class="inline-form" @submit.prevent="create">
