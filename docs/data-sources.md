@@ -22,6 +22,8 @@ Activation requires both `FOOTAO_ENABLED=true` and an operator-specific `FOOTAO_
 
 Feeds are operator-configurable. Pivot stores only title, source, date, and link for 30 days, with an hourly suggested schedule.
 
+Only public HTTP and HTTPS endpoints are accepted. The server rejects localhost, private, link-local, multicast, and credential-bearing URLs before fetching and revalidates redirects. Feed responses are limited to 2 MiB. Article bodies, summaries, media, authors, and raw XML are discarded.
+
 ## Match windows
 
 The all-matches page is designed around Yesterday (results only, no historical TV), Today, Tomorrow, the next seven days, arbitrary date navigation, and filters.

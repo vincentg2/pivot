@@ -6,6 +6,22 @@ info:
 servers:
   - url: http://localhost:8080/api/v1
 paths:
+  /setup/status:
+    get:
+      summary: Read whether the first-install assistant is required
+      responses: {'200': {description: Installation and setup-token status}}
+  /setup:
+    post:
+      summary: Create the first administrator on an empty installation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/FirstInstall'}
+      responses:
+        '201': {description: First administrator created}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
   /auth/register:
     post:
       summary: Register using an invitation code
@@ -115,6 +131,14 @@ paths:
       responses:
         '200': {description: TV listings with linked-match and external markers plus attribution}
         '400': {$ref: '#/components/responses/Problem'}
+  /news:
+    get:
+      summary: List official headlines for favorite clubs or one selected club
+      parameters:
+        - {name: club, in: query, schema: {type: string, format: uuid}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100}}
+      security: [{cookieSession: []}]
+      responses: {'200': {description: Official-feed metadata retained for 30 days}}
   /admin/invitations:
     get:
       summary: List invitations
@@ -192,6 +216,42 @@ paths:
       summary: List recent TV correction audit entries
       security: [{cookieSession: []}]
       responses: {'200': {description: Most recent 100 audit entries}}
+  /admin/news/feeds:
+    get:
+      summary: List configured official club feeds
+      security: [{cookieSession: []}]
+      responses: {'200': {description: Feed configuration}}
+    post:
+      summary: Add or update a public official RSS or Atom feed
+      security: [{cookieSession: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/NewsFeedInput'}
+      responses:
+        '201': {description: Feed saved}
+        '422': {$ref: '#/components/responses/Problem'}
+  /admin/news/feeds/{id}:
+    delete:
+      summary: Delete a configured feed and its imported headlines
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      security: [{cookieSession: []}]
+      responses:
+        '204': {description: Feed deleted}
+        '404': {$ref: '#/components/responses/Problem'}
+  /admin/collections/news:
+    get:
+      summary: Read official-feed collection configuration and status
+      security: [{cookieSession: []}]
+      responses: {'200': {description: News collection status}}
+    post:
+      summary: Collect configured feeds and enforce 30-day retention
+      security: [{cookieSession: []}]
+      responses:
+        '200': {description: News collection completed}
+        '502': {$ref: '#/components/responses/Problem'}
 components:
   securitySchemes:
     cookieSession: {type: apiKey, in: cookie, name: pivot_session}
@@ -204,6 +264,22 @@ components:
         password: {type: string, minLength: 12}
         nickname: {type: string, minLength: 2, maxLength: 40}
         invitationCode: {type: string}
+    FirstInstall:
+      type: object
+      required: [token, email, password, nickname]
+      properties:
+        token: {type: string}
+        email: {type: string, format: email}
+        password: {type: string, minLength: 12, maxLength: 128}
+        nickname: {type: string, minLength: 2, maxLength: 40}
+    NewsFeedInput:
+      type: object
+      required: [clubId, url, sourceName, enabled]
+      properties:
+        clubId: {type: string, format: uuid}
+        url: {type: string, format: uri, maxLength: 2000}
+        sourceName: {type: string, maxLength: 120}
+        enabled: {type: boolean}
     Problem:
       type: object
       required: [type, title, status]

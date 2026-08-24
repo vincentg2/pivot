@@ -20,6 +20,8 @@ type Config struct {
 	FootballDataAPIKey string
 	FootaoEnabled      bool
 	FootaoUserAgent    string
+	NewsUserAgent      string
+	SetupToken         string
 }
 
 func Load() (Config, error) {
@@ -39,9 +41,13 @@ func Load() (Config, error) {
 	if err != nil {
 		return Config{}, fmt.Errorf("parse FOOTAO_ENABLED: %w", err)
 	}
+	address := os.Getenv("APP_ADDR")
+	if address == "" {
+		address = ":" + env("PORT", "8080")
+	}
 	cfg := Config{
 		Environment:        env("APP_ENV", "development"),
-		Address:            env("APP_ADDR", ":8080"),
+		Address:            address,
 		BaseURL:            env("APP_BASE_URL", "http://localhost:5173"),
 		DatabaseURL:        os.Getenv("DATABASE_URL"),
 		SessionCookieName:  env("SESSION_COOKIE_NAME", "pivot_session"),
@@ -51,12 +57,17 @@ func Load() (Config, error) {
 		FootballDataAPIKey: os.Getenv("FOOTBALL_DATA_API_KEY"),
 		FootaoEnabled:      footaoEnabled,
 		FootaoUserAgent:    env("FOOTAO_USER_AGENT", "Pivot/0.1 (+https://github.com/OWNER/pivot)"),
+		NewsUserAgent:      env("NEWS_USER_AGENT", "Pivot/0.1 (+https://github.com/OWNER/pivot)"),
+		SetupToken:         os.Getenv("SETUP_TOKEN"),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("DATABASE_URL is required")
 	}
 	if cfg.FootaoEnabled && (strings.TrimSpace(cfg.FootaoUserAgent) == "" || strings.Contains(cfg.FootaoUserAgent, "OWNER")) {
 		return Config{}, fmt.Errorf("FOOTAO_USER_AGENT must identify the operator when FOOTAO_ENABLED is true")
+	}
+	if cfg.SetupToken != "" && len(cfg.SetupToken) < 20 {
+		return Config{}, fmt.Errorf("SETUP_TOKEN must contain at least 20 characters")
 	}
 	return cfg, nil
 }

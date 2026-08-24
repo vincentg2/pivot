@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { ArrowRight, CalendarDays, Radio, Trophy } from 'lucide-vue-next'
+import { ArrowRight, CalendarDays, Newspaper, Radio, Trophy } from 'lucide-vue-next'
 import AvatarMonogram from '@/components/AvatarMonogram.vue'
 import ClubMark from '@/components/ClubMark.vue'
 import MatchRow from '@/components/MatchRow.vue'
+import NewsCard from '@/components/NewsCard.vue'
 import { api } from '@/lib/api'
 import { addDays, localDate, type FootballMatch } from '@/lib/football'
 import { useSessionStore } from '@/stores/session'
 import { useFavoritesStore } from '@/stores/favorites'
+import type { NewsItem } from '@/lib/news'
 const session = useSessionStore()
 const favorites = useFavoritesStore()
 const favoriteMatches = ref<FootballMatch[]>([])
+const news = ref<NewsItem[]>([])
 const todayLabel = computed(() =>
   new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(
     new Date(),
@@ -20,8 +23,12 @@ onMounted(async () => {
   if (!favorites.ready) await favorites.load()
   const from = localDate(new Date())
   const to = localDate(addDays(new Date(), 7))
-  const response = await api<{ matches: FootballMatch[] }>(`/matches?from=${from}&to=${to}`)
-  favoriteMatches.value = response.matches.filter((match) => match.favorite).slice(0, 5)
+  const [matchResponse, newsResponse] = await Promise.all([
+    api<{ matches: FootballMatch[] }>(`/matches?from=${from}&to=${to}`),
+    api<{ news: NewsItem[] }>('/news?limit=6'),
+  ])
+  favoriteMatches.value = matchResponse.matches.filter((match) => match.favorite).slice(0, 5)
+  news.value = newsResponse.news
 })
 </script>
 
@@ -39,6 +46,18 @@ onMounted(async () => {
         :seed="session.user.avatarSeed"
         size="lg"
       />
+    </section>
+    <section v-if="news.length" class="dashboard-news">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">From official sources</p>
+          <h2>Club dispatches</h2>
+        </div>
+        <RouterLink to="/news" class="text-link">All news</RouterLink>
+      </div>
+      <div class="news-grid dashboard-news-grid">
+        <NewsCard v-for="item in news" :key="item.id" :item="item" show-club />
+      </div>
     </section>
     <section v-if="favorites.clubs.length" class="dashboard-matches">
       <div class="section-heading">
@@ -91,17 +110,23 @@ onMounted(async () => {
         <h3>The week ahead</h3>
         <p>Yesterday, today, tomorrow and the next seven days.</p>
       </RouterLink>
-      <article>
+      <RouterLink to="/tv" class="preview-card">
         <Radio />
         <p class="eyebrow">On television</p>
         <h3>Where to watch</h3>
         <p>French listings, centrally collected with operator consent.</p>
-      </article>
+      </RouterLink>
       <RouterLink to="/standings" class="preview-card">
         <Trophy />
         <p class="eyebrow">Tables</p>
         <h3>The wider picture</h3>
         <p>Domestic standings with clear source attribution.</p>
+      </RouterLink>
+      <RouterLink to="/news" class="preview-card">
+        <Newspaper />
+        <p class="eyebrow">Official news</p>
+        <h3>From the source</h3>
+        <p>Club headlines and links, retained for thirty days.</p>
       </RouterLink>
     </section>
     <p class="attribution">Football data provided by football-data.org.</p>

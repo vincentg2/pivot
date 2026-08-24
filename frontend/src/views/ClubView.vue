@@ -4,15 +4,18 @@ import { ArrowLeft, ExternalLink, Heart, MapPin } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 import ClubMark from '@/components/ClubMark.vue'
 import MatchRow from '@/components/MatchRow.vue'
+import NewsCard from '@/components/NewsCard.vue'
 import { api } from '@/lib/api'
 import { addDays, localDate, type FootballMatch } from '@/lib/football'
 import { useFavoritesStore, type Club } from '@/stores/favorites'
+import type { NewsItem } from '@/lib/news'
 
 const route = useRoute()
 const favorites = useFavoritesStore()
 const club = ref<Club | null>(null)
 const notice = ref('')
 const matches = ref<FootballMatch[]>([])
+const news = ref<NewsItem[]>([])
 
 async function toggle() {
   if (!club.value) return
@@ -33,6 +36,7 @@ onMounted(async () => {
       `/matches?from=${from}&to=${to}&club=${route.params.id}`,
     )
   ).matches
+  news.value = (await api<{ news: NewsItem[] }>(`/news?club=${route.params.id}&limit=6`)).news
 })
 </script>
 
@@ -72,6 +76,21 @@ onMounted(async () => {
             >Visit club website <ExternalLink :size="15"
           /></a>
         </article>
+      </section>
+      <section class="club-news">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Official dispatches</p>
+            <h2>Latest news</h2>
+          </div>
+          <RouterLink to="/news" class="text-link">All news</RouterLink>
+        </div>
+        <div v-if="news.length" class="news-grid club-news-grid">
+          <NewsCard v-for="item in news" :key="item.id" :item="item" />
+        </div>
+        <p v-else class="quiet dashboard-empty-line">
+          No official feed has been collected for this club.
+        </p>
       </section>
       <section class="club-fixtures">
         <div class="section-heading">

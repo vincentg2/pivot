@@ -19,7 +19,9 @@ import (
 	"github.com/vincentg2/pivot/backend/internal/database"
 	"github.com/vincentg2/pivot/backend/internal/football"
 	"github.com/vincentg2/pivot/backend/internal/httpx"
+	"github.com/vincentg2/pivot/backend/internal/installation"
 	"github.com/vincentg2/pivot/backend/internal/invitation"
+	"github.com/vincentg2/pivot/backend/internal/news"
 	"github.com/vincentg2/pivot/backend/internal/platform/validate"
 	"github.com/vincentg2/pivot/backend/internal/user"
 	"golang.org/x/time/rate"
@@ -51,6 +53,9 @@ func main() {
 	footballHandler := football.NewHandler(footballService, logger)
 	broadcastService := broadcast.NewService(broadcast.NewPostgresRepository(pool), broadcast.NewFootaoConnector(cfg.FootaoEnabled, cfg.FootaoUserAgent))
 	broadcastHandler := broadcast.NewHandler(broadcastService, logger)
+	newsService := news.NewService(news.NewPostgresRepository(pool), news.NewRSSConnector(cfg.NewsUserAgent))
+	newsHandler := news.NewHandler(newsService, logger)
+	installationHandler := installation.NewHandler(installation.NewService(installation.NewPostgresRepository(pool), cfg.SetupToken))
 
 	e := echo.New()
 	e.HideBanner = true
@@ -79,6 +84,8 @@ func main() {
 	})
 	api := e.Group("/api/v1")
 	loginLimiter := middleware.RateLimiter(newLoginRateLimiter(cfg.LoginRateLimit))
+	api.GET("/setup/status", installationHandler.Status)
+	api.POST("/setup", installationHandler.Install, loginLimiter)
 	api.POST("/auth/register", authHandler.Register)
 	api.POST("/auth/login", authHandler.Login, loginLimiter)
 	api.POST("/auth/logout", authHandler.Logout)
@@ -93,6 +100,7 @@ func main() {
 	api.GET("/matches", footballHandler.Matches, authHandler.RequireSession)
 	api.GET("/standings", footballHandler.Standing, authHandler.RequireSession)
 	api.GET("/broadcasts", broadcastHandler.List, authHandler.RequireSession)
+	api.GET("/news", newsHandler.List, authHandler.RequireSession)
 	admin := api.Group("/admin", authHandler.RequireAdmin)
 	admin.GET("/invitations", inviteHandler.List)
 	admin.POST("/invitations", inviteHandler.Create)
@@ -107,6 +115,11 @@ func main() {
 	admin.PUT("/broadcasts/:id/correction", broadcastHandler.Correct)
 	admin.DELETE("/broadcasts/:id/correction", broadcastHandler.Clear)
 	admin.GET("/broadcasts/audit", broadcastHandler.Audit)
+	admin.GET("/news/feeds", newsHandler.Feeds)
+	admin.POST("/news/feeds", newsHandler.SaveFeed)
+	admin.DELETE("/news/feeds/:id", newsHandler.DeleteFeed)
+	admin.GET("/collections/news", newsHandler.CollectionStatus)
+	admin.POST("/collections/news", newsHandler.Sync)
 
 	go func() {
 		logger.Info("server starting", "address", cfg.Address, "environment", cfg.Environment)

@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pivot
+      POSTGRES_USER: pivot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - pivot-production-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pivot -d pivot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ENV: production
+      APP_ADDR: :8080
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+      DATABASE_URL: postgres://pivot:${POSTGRES_PASSWORD}@postgres:5432/pivot?sslmode=disable
+      SESSION_SECURE: ${SESSION_SECURE:-false}
+      SESSION_TTL: ${SESSION_TTL:-720h}
+      SETUP_TOKEN: ${SETUP_TOKEN:?Set SETUP_TOKEN}
+      FOOTBALL_DATA_API_KEY: ${FOOTBALL_DATA_API_KEY:-}
+      FOOTAO_ENABLED: ${FOOTAO_ENABLED:-false}
+      FOOTAO_USER_AGENT: ${FOOTAO_USER_AGENT:-Pivot/0.1}
+      NEWS_USER_AGENT: ${NEWS_USER_AGENT:-Pivot/0.1}
+    expose: ["8080"]
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_REMOTE_LOGOS_ENABLED: ${VITE_REMOTE_LOGOS_ENABLED:-false}
+    restart: unless-stopped
+    depends_on: [api]
+    ports: ["3000:80"]
+
+volumes:
+  pivot-production-data:

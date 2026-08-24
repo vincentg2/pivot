@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: pivot-api
+    runtime: docker
+    region: frankfurt
+    plan: starter
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeployTrigger: checksPass
+    envVars:
+      - {key: APP_ENV, value: production}
+      - {key: APP_BASE_URL, sync: false}
+      - {key: DATABASE_URL, sync: false}
+      - {key: SESSION_SECURE, value: "true"}
+      - {key: SETUP_TOKEN, generateValue: true}
+      - {key: FOOTBALL_DATA_API_KEY, sync: false}
+      - {key: FOOTAO_ENABLED, value: "false"}
+      - {key: FOOTAO_USER_AGENT, sync: false}
+      - {key: NEWS_USER_AGENT, sync: false}
+  - type: web
+    name: pivot-web
+    runtime: static
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @pivot/frontend build
+    staticPublishPath: ./frontend/dist
+    autoDeployTrigger: checksPass
+    envVars:
+      - {key: VITE_API_BASE_URL, sync: false}
+      - {key: VITE_REMOTE_LOGOS_ENABLED, value: "false"}
+    routes:
+      - {type: rewrite, source: "/*", destination: /index.html}

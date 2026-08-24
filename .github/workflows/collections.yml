@@ -1,0 +1,56 @@
+name: Scheduled collections
+on:
+  workflow_dispatch:
+    inputs:
+      connector:
+        description: Connector to run
+        required: true
+        type: choice
+        options: [catalog, sport, tv, news]
+  schedule:
+    - cron: "17 * * * *"
+    - cron: "23 */6 * * *"
+    - cron: "41 3 * * *"
+    - cron: "7 4 * * 1"
+permissions:
+  contents: read
+concurrency:
+  group: pivot-collections-${{ github.event.schedule || inputs.connector }}
+  cancel-in-progress: false
+jobs:
+  collect:
+    if: vars.COLLECTIONS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        connector: [catalog, sport, tv, news]
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+      FOOTAO_ENABLED: ${{ secrets.FOOTAO_ENABLED || 'false' }}
+      FOOTAO_USER_AGENT: ${{ secrets.FOOTAO_USER_AGENT }}
+      NEWS_USER_AGENT: ${{ secrets.NEWS_USER_AGENT }}
+    steps:
+      - name: Decide whether this connector is due
+        id: due
+        env:
+          REQUESTED: ${{ inputs.connector }}
+          SCHEDULE: ${{ github.event.schedule }}
+          CONNECTOR: ${{ matrix.connector }}
+        run: |
+          due=false
+          if [ -n "$REQUESTED" ] && [ "$REQUESTED" = "$CONNECTOR" ]; then due=true; fi
+          if [ "$SCHEDULE" = "17 * * * *" ] && [ "$CONNECTOR" = news ]; then due=true; fi
+          if [ "$SCHEDULE" = "23 */6 * * *" ] && [ "$CONNECTOR" = sport ]; then due=true; fi
+          if [ "$SCHEDULE" = "41 3 * * *" ] && [ "$CONNECTOR" = tv ]; then due=true; fi
+          if [ "$SCHEDULE" = "7 4 * * 1" ] && [ "$CONNECTOR" = catalog ]; then due=true; fi
+          echo "run=$due" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        if: steps.due.outputs.run == 'true'
+      - uses: actions/setup-go@v5
+        if: steps.due.outputs.run == 'true'
+        with: {go-version-file: backend/go.mod, cache-dependency-path: backend/go.sum}
+      - name: Run collection
+        if: steps.due.outputs.run == 'true'
+        working-directory: backend
+        run: go run ./cmd/collect-${{ matrix.connector }}

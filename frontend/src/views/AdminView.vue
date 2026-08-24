@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import { Copy, Plus, RefreshCw, Tv, X } from 'lucide-vue-next'
+import { Copy, Newspaper, Plus, RefreshCw, Tv, X } from 'lucide-vue-next'
 import { api } from '@/lib/api'
 
 interface Invitation {
@@ -145,6 +145,19 @@ onMounted(() => {
           syncing ? 'Synchronizing…' : 'Run now'
         }}
       </button>
+    </section>
+    <section class="settings-card collection-card">
+      <div>
+        <p class="eyebrow">Official news</p>
+        <h2>Club RSS & Atom feeds</h2>
+        <p class="quiet">
+          Configure official sources, run collections and review the 30-day metadata policy.
+        </p>
+        <RouterLink to="/admin/news" class="admin-detail-link"
+          ><Newspaper :size="16" /> Configure official feeds</RouterLink
+        >
+      </div>
+      <RouterLink to="/admin/news" class="button secondary">Manage news</RouterLink>
     </section>
     <section class="settings-card collection-card">
       <div>

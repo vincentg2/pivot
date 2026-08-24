@@ -4,9 +4,9 @@ Pivot is a private, invitation-only football dashboard for friends and a self-ho
 
 > **Français :** Pivot est un tableau de bord football privé et responsive, accessible sur invitation. Le projet est auto-hébergeable ; les connecteurs de données restent optionnels et chaque opérateur fournit ses propres accès.
 
-## Milestones 1–4
+## Milestones 1–5
 
-The foundation includes the Vue/Go monorepo, responsive theme system, PostgreSQL, opaque cookie sessions, invitation registration, profiles, account deletion, administration, tests, CI, and development tooling. The product now includes a local club catalog, club profiles, five synchronized favorites, fixtures and results by date, current domestic standings, French TV listings, and operator-controlled data collections. TV-only matches remain visibly external, while cautious matching enriches recognized catalog fixtures.
+The foundation includes the Vue/Go monorepo, responsive theme system, PostgreSQL, opaque cookie sessions, invitation registration, profiles, account deletion, administration, tests, CI, and development tooling. The product includes a local club catalog, five synchronized favorites, fixtures, results, standings, French TV listings, official club headlines, and operator-controlled collections. TV-only matches remain visibly external, while cautious matching enriches recognized catalog fixtures.
 
 ## Architecture
 
@@ -38,9 +38,21 @@ After the club catalog is populated, run **Admin → Sports collection → Run s
 
 The Footao connector is a separate, explicit opt-in. Only enable it when the operator has permission: set `FOOTAO_ENABLED=true` and replace the placeholder `FOOTAO_USER_AGENT` with an identifiable contact URL, restart the API, migrate, then use **Admin → Television collection → Run TV data** or `just collect-tv`. Pivot performs one central server-side fetch with bounded retries; browsers never contact Footao. Manual listing corrections and restores are recorded in the admin audit trail.
 
+Official club news is configured per club under **Admin → Official news**. Pivot accepts public RSS and Atom URLs, blocks private-network fetches, and stores only titles, source names, publication dates, and canonical links for 30 days. Run `just collect-news` or enable the opt-in scheduled workflow described in [deployment documentation](docs/deployment.md).
+
+## First installation
+
+On an empty database, Pivot redirects to `/setup`. Set a secret `SETUP_TOKEN` of at least 20 characters before starting the API, enter it once in the web assistant, and create the first administrator. The route locks permanently as soon as any user exists. Existing installations are unaffected, and `just create-admin` remains available for operator recovery.
+
 ## Self-hosting with Docker Compose
 
-The checked-in Compose file intentionally runs PostgreSQL only for local development. A production Compose profile and first-install web assistant will land before the first public release. Until then, build `frontend/` as static assets, run the Go API behind TLS, set a strong PostgreSQL password, and set `SESSION_SECURE=true`.
+The default `docker-compose.yml` still runs PostgreSQL only for local development. For a complete installation, copy `.env.example` to `.env`, replace `POSTGRES_PASSWORD` and `SETUP_TOKEN`, then run:
+
+```sh
+docker compose -f compose.selfhosted.yml up --build -d
+```
+
+Open `http://localhost:3000/setup`. Use TLS and `SESSION_SECURE=true` outside localhost. The API container applies Goose migrations before starting. See [deployment documentation](docs/deployment.md) for backups, Neon, Render, and scheduled collections.
 
 ## Data and licensing
 
@@ -48,4 +60,4 @@ Pivot works without data-provider keys. Read [data source policy](docs/data-sour
 
 ## Status
 
-Milestone 4 of 5. The repository remains private until the owner explicitly decides to publish it.
+Milestone 5 of 5. The repository remains private until the owner explicitly decides to publish it. GHCR publication intentionally starts only when the owner requests the first public release.
