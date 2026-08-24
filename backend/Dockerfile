@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM node:22-alpine AS frontend-builder
+FROM --platform=$BUILDPLATFORM node:22-alpine AS frontend-builder
 WORKDIR /src
 RUN corepack enable
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -10,18 +10,22 @@ ARG VITE_REMOTE_LOGOS_ENABLED=true
 ENV VITE_REMOTE_LOGOS_ENABLED=$VITE_REMOTE_LOGOS_ENABLED
 RUN pnpm --filter @pivot/frontend build
 
-FROM golang:1.24-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS builder
+ARG TARGETOS
+ARG TARGETARCH
 WORKDIR /src
 RUN apk add --no-cache ca-certificates git
 COPY backend/go.mod backend/go.sum ./backend/
 RUN cd backend && go mod download
 COPY backend ./backend
-RUN cd backend && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/pivot-api ./cmd/api \
-    && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/collect-catalog ./cmd/collect-catalog \
-    && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/collect-sport ./cmd/collect-sport \
-    && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/collect-tv ./cmd/collect-tv \
-    && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/collect-news ./cmd/collect-news
-RUN GOBIN=/out go install github.com/pressly/goose/v3/cmd/goose@v3.24.1
+RUN cd backend && CGO_ENABLED=0 GOOS="$TARGETOS" GOARCH="$TARGETARCH" go build -trimpath -ldflags="-s -w" -o /out/pivot-api ./cmd/api \
+    && CGO_ENABLED=0 GOOS="$TARGETOS" GOARCH="$TARGETARCH" go build -trimpath -ldflags="-s -w" -o /out/collect-catalog ./cmd/collect-catalog \
+    && CGO_ENABLED=0 GOOS="$TARGETOS" GOARCH="$TARGETARCH" go build -trimpath -ldflags="-s -w" -o /out/collect-sport ./cmd/collect-sport \
+    && CGO_ENABLED=0 GOOS="$TARGETOS" GOARCH="$TARGETARCH" go build -trimpath -ldflags="-s -w" -o /out/collect-tv ./cmd/collect-tv \
+    && CGO_ENABLED=0 GOOS="$TARGETOS" GOARCH="$TARGETARCH" go build -trimpath -ldflags="-s -w" -o /out/collect-news ./cmd/collect-news
+RUN CGO_ENABLED=0 GOOS="$TARGETOS" GOARCH="$TARGETARCH" go install github.com/pressly/goose/v3/cmd/goose@v3.24.1 \
+    && find "$(go env GOPATH)/bin" -type f -name goose -exec cp {} /out/goose \; \
+    && test -x /out/goose
 
 FROM alpine:3.22
 RUN apk add --no-cache ca-certificates tzdata
