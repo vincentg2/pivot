@@ -50,9 +50,8 @@ watch(selectedClubId, () => (visibleMatchCount.value = matchBatchSize))
   <main class="dashboard page-width">
     <section class="welcome-row">
       <div>
-        <p class="eyebrow">{{ todayLabel }}</p>
         <h1>Good evening, {{ session.user?.nickname }}.</h1>
-        <p class="lede">Here’s the shape of your football week.</p>
+        <p class="dashboard-date">{{ todayLabel }}</p>
       </div>
       <AvatarMonogram
         v-if="session.user"
@@ -63,10 +62,7 @@ watch(selectedClubId, () => (visibleMatchCount.value = matchBatchSize))
     </section>
     <section v-if="news.length" class="dashboard-news">
       <div class="section-heading">
-        <div>
-          <p class="eyebrow">From official sources</p>
-          <h2>Club dispatches</h2>
-        </div>
+        <h2>Latest club news</h2>
         <RouterLink to="/news" class="text-link">All news</RouterLink>
       </div>
       <div class="news-grid dashboard-news-grid">
@@ -75,10 +71,7 @@ watch(selectedClubId, () => (visibleMatchCount.value = matchBatchSize))
     </section>
     <section v-if="favorites.clubs.length" class="dashboard-matches">
       <div class="section-heading">
-        <div>
-          <p class="eyebrow">Next for your clubs</p>
-          <h2>The month ahead</h2>
-        </div>
+        <h2>Upcoming matches <span>30 days</span></h2>
         <RouterLink to="/matches" class="text-link">All matches</RouterLink>
       </div>
       <div class="favorite-club-filters" role="group" aria-label="Filter matches by favorite club">
@@ -124,10 +117,7 @@ watch(selectedClubId, () => (visibleMatchCount.value = matchBatchSize))
     </section>
     <section v-if="favorites.ready && favorites.clubs.length" class="favorite-dashboard">
       <div class="section-heading">
-        <div>
-          <p class="eyebrow">Your clubs</p>
-          <h2>Close to home</h2>
-        </div>
+        <h2>Favourite clubs</h2>
         <RouterLink to="/clubs" class="text-link">Edit favorites</RouterLink>
       </div>
       <div class="favorite-strip">
@@ -150,26 +140,22 @@ watch(selectedClubId, () => (visibleMatchCount.value = matchBatchSize))
     <section class="preview-grid" aria-label="Upcoming Pivot sections">
       <RouterLink to="/matches" class="preview-card">
         <CalendarDays />
-        <p class="eyebrow">Matches</p>
-        <h3>The week ahead</h3>
+        <h3>Matches</h3>
         <p>Yesterday, today, tomorrow and the next seven days.</p>
       </RouterLink>
       <RouterLink to="/tv" class="preview-card">
         <Radio />
-        <p class="eyebrow">On television</p>
-        <h3>Where to watch</h3>
+        <h3>TV schedule</h3>
         <p>French listings, centrally collected with operator consent.</p>
       </RouterLink>
       <RouterLink to="/standings" class="preview-card">
         <Trophy />
-        <p class="eyebrow">Tables</p>
-        <h3>The wider picture</h3>
+        <h3>Tables</h3>
         <p>Domestic standings with clear source attribution.</p>
       </RouterLink>
       <RouterLink to="/news" class="preview-card">
         <Newspaper />
-        <p class="eyebrow">Official news</p>
-        <h3>From the source</h3>
+        <h3>News</h3>
         <p>Club headlines and links, retained for thirty days.</p>
       </RouterLink>
     </section>

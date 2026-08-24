@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import ChannelMark from '@/components/ChannelMark.vue'
 import ClubMark from '@/components/ClubMark.vue'
 import type { FootballMatch } from '@/lib/football'
 
@@ -59,7 +60,7 @@ const scheduleLabel = computed(() =>
       class="match-channels"
       aria-label="TV channels"
     >
-      <span v-for="channel in channels" :key="channel">{{ channel }}</span>
+      <ChannelMark v-for="channel in channels" :key="channel" :channel="channel" />
       <span v-if="!channels?.length" class="pending">TV channel not announced yet</span>
     </div>
   </article>

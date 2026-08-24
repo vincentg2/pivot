@@ -143,16 +143,24 @@ h3 {
   text-decoration: none;
 }
 .brand-mark {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border: 0;
-  border-radius: 10px;
-  background: var(--accent);
-  color: white;
-  font-size: 0.9rem;
-  font-weight: 800;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+}
+.pivot-logo-field {
+  fill: var(--accent);
+}
+.pivot-logo-path {
+  fill: none;
+  stroke: white;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3.5;
+}
+.pivot-logo-point {
+  fill: var(--signal);
+  stroke: var(--accent);
+  stroke-width: 1.5;
 }
 .site-header {
   display: flex;
@@ -401,6 +409,12 @@ small {
 .welcome-row .lede {
   color: rgb(255 255 255 / 0.78);
 }
+.dashboard-date {
+  margin: 0;
+  color: rgb(255 255 255 / 0.72);
+  font-size: 0.85rem;
+  font-weight: 650;
+}
 .avatar {
   display: inline-grid;
   flex: 0 0 auto;
@@ -488,11 +502,12 @@ small {
 }
 .matches-heading,
 .standings-heading {
-  margin-bottom: 3rem;
+  margin-bottom: 2.25rem;
 }
 .matches-heading h1,
 .standings-heading h1 {
-  margin-bottom: 1rem;
+  margin-bottom: 0;
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
 }
 .date-presets {
   display: flex;
@@ -540,7 +555,7 @@ small {
   padding-bottom: 0.8rem;
   align-items: baseline;
   justify-content: space-between;
-  border-bottom: 2px solid var(--accent);
+  border-bottom: 1px solid var(--line);
 }
 .match-date h2 {
   margin: 0;
@@ -569,23 +584,43 @@ small {
   justify-content: flex-end;
   gap: 0.4rem;
 }
-.match-channels span,
-.channel-list > span {
+.match-channels > .channel-mark,
+.channel-list > .channel-mark {
+  display: inline-flex;
   padding: 0.28rem 0.48rem;
+  align-items: center;
+  gap: 0.4rem;
   border: 1px solid var(--line);
   border-radius: 99px;
   background: var(--surface-strong);
   color: var(--ink);
   font-size: 0.68rem;
 }
-.match-channels span:not(.pending) {
+.match-channels > .channel-mark {
   border-color: color-mix(in srgb, var(--signal) 58%, var(--line));
   background: color-mix(in srgb, var(--signal) 16%, var(--paper-raised));
 }
+.channel-logo-wrap {
+  display: grid;
+  width: 24px;
+  height: 17px;
+  padding: 2px 3px;
+  place-items: center;
+  border-radius: 4px;
+  background: white;
+}
+.channel-logo-wrap img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
 .match-channels .pending {
+  padding: 0.28rem 0.48rem;
+  border: 1px dashed var(--line);
+  border-radius: 99px;
   background: transparent;
   color: var(--muted);
-  border-style: dashed;
+  font-size: 0.68rem;
 }
 .external-match-row {
   display: grid;
@@ -884,7 +919,6 @@ small {
 }
 .compact-matches {
   border: 1px solid var(--line);
-  border-top: 3px solid var(--accent);
   border-radius: 14px;
   background: var(--paper-raised);
   box-shadow: var(--shadow-tight);
@@ -1171,6 +1205,14 @@ small {
 }
 .section-heading h2 {
   margin: 0;
+}
+.section-heading h2 > span {
+  margin-left: 0.55rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 .favorite-strip {
   display: grid;

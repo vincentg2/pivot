@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { ExternalLink, Radio, Tv } from 'lucide-vue-next'
+import ChannelMark from '@/components/ChannelMark.vue'
 import { api } from '@/lib/api'
 import { addDays, localDate } from '@/lib/football'
 import { listingTime, type BroadcastListing } from '@/lib/broadcast'
@@ -49,11 +50,7 @@ onMounted(load)
 <template>
   <main class="broadcast-page page-width">
     <header class="matches-heading broadcast-heading">
-      <div>
-        <p class="eyebrow">French television guide</p>
-        <h1>What’s on.</h1>
-        <p class="lede">A quiet view of the matches you can watch, channel by channel.</p>
-      </div>
+      <h1>TV schedule</h1>
       <Tv :size="44" aria-hidden="true" />
     </header>
     <section class="date-presets" aria-label="TV schedule date range">
@@ -82,7 +79,7 @@ onMounted(load)
             <span>{{ listing.competitionName || 'Competition not identified' }}</span>
           </div>
           <div class="channel-list">
-            <span v-for="channel in listing.channels" :key="channel">{{ channel }}</span>
+            <ChannelMark v-for="channel in listing.channels" :key="channel" :channel="channel" />
           </div>
           <a
             v-if="listing.sourceUrl"

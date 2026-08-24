@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import ChannelMark from '@/components/ChannelMark.vue'
 import MatchRow from '@/components/MatchRow.vue'
 import { api } from '@/lib/api'
 import { addDays, localDate, type FootballMatch } from '@/lib/football'
@@ -91,9 +92,7 @@ onMounted(async () => {
 <template>
   <main class="matches-page page-width">
     <header class="matches-heading">
-      <p class="eyebrow">Fixtures & results</p>
-      <h1>All matches.</h1>
-      <p class="lede">The scoreline, the schedule, and nothing noisy around it.</p>
+      <h1>Matches</h1>
     </header>
     <section class="date-presets" aria-label="Match date range">
       <button @click="choose(addDays(new Date(), -1))">Yesterday</button>
@@ -147,8 +146,8 @@ onMounted(async () => {
             ><span>{{ listing.competitionName || 'External TV listing' }} · not enriched</span>
           </div>
           <span class="channel-list"
-            ><span v-for="channel in listing.channels" :key="channel">{{ channel }}</span></span
-          >
+            ><ChannelMark v-for="channel in listing.channels" :key="channel" :channel="channel"
+          /></span>
         </article>
       </section>
     </div>

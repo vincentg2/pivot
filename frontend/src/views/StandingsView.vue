@@ -33,10 +33,7 @@ onMounted(async () => {
 <template>
   <main class="standings-page page-width">
     <header class="standings-heading">
-      <div>
-        <p class="eyebrow">Domestic tables</p>
-        <h1>The wider picture.</h1>
-      </div>
+      <h1>Tables</h1>
       <label
         >Competition<select v-model="selected" @change="load">
           <option v-for="item in competitions" :key="item.id" :value="item.code">

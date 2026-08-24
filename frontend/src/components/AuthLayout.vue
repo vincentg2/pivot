@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import PivotLogo from '@/components/PivotLogo.vue'
+
 defineProps<{ eyebrow: string; title: string; intro: string }>()
 </script>
 
@@ -6,7 +8,7 @@ defineProps<{ eyebrow: string; title: string; intro: string }>()
   <main class="auth-page">
     <section class="auth-story" aria-labelledby="auth-title">
       <RouterLink to="/" class="brand"
-        ><span class="brand-mark">P</span><span>Pivot</span></RouterLink
+        ><PivotLogo class="brand-mark" /><span>Pivot</span></RouterLink
       >
       <div>
         <p class="eyebrow">{{ eyebrow }}</p>

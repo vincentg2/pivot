@@ -6,6 +6,8 @@ The primary catalog connector supports competitions available to the operator's 
 
 Remote badge display is an operator setting (`VITE_REMOTE_LOGOS_ENABLED=false` by default). Images are linked from the provider and never copied into the repository. A generated monogram is the default fallback. Catalog collection is launched from the administration screen and its latest outcome is retained locally.
 
+The same operator setting enables an allowlisted set of remote broadcaster marks from Wikimedia Commons and the Iconify API. Channel names remain the source of truth and the visible fallback. Pivot does not extract or serve Footao's CSS sprite, make browser requests to Footao, or distribute broadcaster artwork.
+
 Suggested schedule: club catalog weekly; fixtures and standings four times daily. Past seasons are retained.
 
 The sports collector fetches yesterday through the next 30 days and the current total standings for the five major leagues. Requests are paced for conservative free-plan usage. Repeated runs upsert matches and tables while leaving older seasons intact.

@@ -34,7 +34,7 @@ Run all checks with `just check`. Create an admin interactively with `just creat
 
 Administrators can issue a one-time password reset link from the administration page. Links expire after 30 minutes, are stored only as hashes, and revoke all existing sessions when consumed.
 
-The application works with an empty catalog and no provider key. To populate the five major European leagues, set `FOOTBALL_DATA_API_KEY` in `.env`, restart the API, then use **Admin → Data collection → Run now**. Remote crest rendering remains off unless the operator explicitly sets `VITE_REMOTE_LOGOS_ENABLED=true`; URLs are stored, but images are never distributed with Pivot.
+The application works with an empty catalog and no provider key. To populate the five major European leagues, set `FOOTBALL_DATA_API_KEY` in `.env`, restart the API, then use **Admin → Data collection → Run now**. Remote club and broadcaster marks remain off unless the operator explicitly sets `VITE_REMOTE_LOGOS_ENABLED=true`; images are requested from allowlisted providers and never distributed with Pivot.
 
 After the club catalog is populated, run **Admin → Sports collection → Run sports data** or `just collect-sport`. The importer deliberately paces provider requests, stores yesterday through the next 30 days, refreshes current standings, and preserves previously encountered seasons and matches.
 

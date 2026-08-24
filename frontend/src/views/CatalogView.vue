@@ -67,11 +67,7 @@ onMounted(async () => {
 <template>
   <main class="catalog page-width">
     <header class="catalog-heading">
-      <div>
-        <p class="eyebrow">Club directory</p>
-        <h1>Find your colors.</h1>
-        <p class="lede">Follow up to five clubs and shape your private dashboard.</p>
-      </div>
+      <h1>Clubs</h1>
       <p class="favorite-count">
         <strong>{{ favorites.clubs.length }}</strong> / 5 favorites
       </p>

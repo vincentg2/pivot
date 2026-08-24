@@ -16,11 +16,7 @@ onMounted(async () => {
 <template>
   <main class="news-page page-width">
     <header class="matches-heading news-heading">
-      <p class="eyebrow">Official club sources</p>
-      <h1>The morning papers.</h1>
-      <p class="lede">
-        Headlines from the clubs you follow, with every story opening at its original source.
-      </p>
+      <h1>News</h1>
     </header>
     <p v-if="loading" class="catalog-state">Loading official news…</p>
     <section v-else-if="items.length" class="news-grid" aria-label="Official club news">
