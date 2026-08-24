@@ -1,22 +1,50 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { ArrowRight, CalendarDays, Newspaper, Radio, Trophy } from 'lucide-vue-next'
+import { computed, onMounted, ref, watch } from 'vue'
+import {
+  ArrowRight,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Newspaper,
+  Radio,
+  Trophy,
+} from 'lucide-vue-next'
 import AvatarMonogram from '@/components/AvatarMonogram.vue'
 import ClubMark from '@/components/ClubMark.vue'
 import MatchRow from '@/components/MatchRow.vue'
 import NewsCard from '@/components/NewsCard.vue'
 import { api } from '@/lib/api'
 import { broadcastChannelsByMatch, type BroadcastListing } from '@/lib/broadcast'
+import { favoriteMatchesWithin, pageItems } from '@/lib/dashboard'
 import { addDays, localDate, type FootballMatch } from '@/lib/football'
 import { useSessionStore } from '@/stores/session'
 import { useFavoritesStore } from '@/stores/favorites'
 import type { NewsItem } from '@/lib/news'
 const session = useSessionStore()
 const favorites = useFavoritesStore()
-const favoriteMatches = ref<FootballMatch[]>([])
+const loadedMatches = ref<FootballMatch[]>([])
 const broadcasts = ref<BroadcastListing[]>([])
 const news = ref<NewsItem[]>([])
+const horizonDays = ref<14 | 30>(14)
+const matchPage = ref(0)
+const matchPageSize = 5
 const channelsByMatch = computed(() => broadcastChannelsByMatch(broadcasts.value))
+const matchesInHorizon = computed(() =>
+  favoriteMatchesWithin(loadedMatches.value, new Date(), horizonDays.value),
+)
+const matchPageCount = computed(() =>
+  Math.max(1, Math.ceil(matchesInHorizon.value.length / matchPageSize)),
+)
+const favoriteMatches = computed(() =>
+  pageItems(matchesInHorizon.value, matchPage.value, matchPageSize),
+)
+const matchRangeStart = computed(() => matchPage.value * matchPageSize + 1)
+const matchRangeEnd = computed(() =>
+  Math.min((matchPage.value + 1) * matchPageSize, matchesInHorizon.value.length),
+)
+const matchHeading = computed(() =>
+  horizonDays.value === 14 ? 'The next two weeks' : 'The month ahead',
+)
 const todayLabel = computed(() =>
   new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(
     new Date(),
@@ -25,15 +53,19 @@ const todayLabel = computed(() =>
 onMounted(async () => {
   if (!favorites.ready) await favorites.load()
   const from = localDate(new Date())
-  const to = localDate(addDays(new Date(), 7))
+  const to = localDate(addDays(new Date(), 30))
   const [matchResponse, broadcastResponse, newsResponse] = await Promise.all([
     api<{ matches: FootballMatch[] }>(`/matches?from=${from}&to=${to}`),
     api<{ listings: BroadcastListing[] }>(`/broadcasts?from=${from}&to=${to}`),
     api<{ news: NewsItem[] }>('/news?limit=6'),
   ])
-  favoriteMatches.value = matchResponse.matches.filter((match) => match.favorite).slice(0, 5)
+  loadedMatches.value = matchResponse.matches
   broadcasts.value = broadcastResponse.listings
   news.value = newsResponse.news
+})
+watch(horizonDays, () => (matchPage.value = 0))
+watch(matchPageCount, (count) => {
+  if (matchPage.value >= count) matchPage.value = count - 1
 })
 </script>
 
@@ -68,9 +100,29 @@ onMounted(async () => {
       <div class="section-heading">
         <div>
           <p class="eyebrow">Next for your clubs</p>
-          <h2>The week ahead</h2>
+          <h2>{{ matchHeading }}</h2>
         </div>
-        <RouterLink to="/matches" class="text-link">All matches</RouterLink>
+        <div class="dashboard-match-tools">
+          <div class="match-horizon" role="group" aria-label="Favorite match horizon">
+            <button
+              type="button"
+              :class="{ active: horizonDays === 14 }"
+              :aria-pressed="horizonDays === 14"
+              @click="horizonDays = 14"
+            >
+              2 weeks
+            </button>
+            <button
+              type="button"
+              :class="{ active: horizonDays === 30 }"
+              :aria-pressed="horizonDays === 30"
+              @click="horizonDays = 30"
+            >
+              1 month
+            </button>
+          </div>
+          <RouterLink to="/matches" class="text-link">All matches</RouterLink>
+        </div>
       </div>
       <div v-if="favoriteMatches.length" class="compact-matches">
         <MatchRow
@@ -82,8 +134,33 @@ onMounted(async () => {
         />
       </div>
       <p v-else class="quiet dashboard-empty-line">
-        No matches synchronized for your favorites this week.
+        No matches synchronized for your favorites in this period.
       </p>
+      <nav
+        v-if="matchesInHorizon.length > matchPageSize"
+        class="dashboard-match-pagination"
+        aria-label="Favorite match pages"
+      >
+        <button
+          type="button"
+          :disabled="matchPage === 0"
+          aria-label="Previous favorite matches"
+          @click="matchPage--"
+        >
+          <ChevronLeft :size="17" /> Previous
+        </button>
+        <span aria-live="polite"
+          >{{ matchRangeStart }}–{{ matchRangeEnd }} of {{ matchesInHorizon.length }}</span
+        >
+        <button
+          type="button"
+          :disabled="matchPage + 1 >= matchPageCount"
+          aria-label="Next favorite matches"
+          @click="matchPage++"
+        >
+          Next <ChevronRight :size="17" />
+        </button>
+      </nav>
     </section>
     <section v-if="favorites.ready && favorites.clubs.length" class="favorite-dashboard">
       <div class="section-heading">

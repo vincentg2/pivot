@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LogOut, Settings } from 'lucide-vue-next'
+import { House, LogOut, Settings } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
 
@@ -17,6 +17,9 @@ async function logout() {
       ><span class="brand-mark">P</span><span>Pivot</span></RouterLink
     >
     <nav aria-label="Account navigation">
+      <RouterLink to="/" class="text-link home-link" aria-label="Home"
+        ><House :size="16" /><span class="home-label">Home</span></RouterLink
+      >
       <RouterLink to="/clubs" class="text-link">Clubs</RouterLink>
       <RouterLink to="/matches" class="text-link">Matches</RouterLink>
       <RouterLink to="/standings" class="text-link">Tables</RouterLink>

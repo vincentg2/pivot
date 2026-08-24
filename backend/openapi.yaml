@@ -166,7 +166,7 @@ paths:
       security: [{cookieSession: []}]
       responses: {'200': {description: Sports collection status}}
     post:
-      summary: Synchronize yesterday through the next seven days and current standings
+      summary: Synchronize yesterday through the next 30 days and current standings
       security: [{cookieSession: []}]
       responses:
         '200': {description: Sports collection completed}

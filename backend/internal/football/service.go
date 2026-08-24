@@ -41,7 +41,7 @@ func (s *Service) Sync(ctx context.Context, now time.Time) (CollectionRun, error
 	if err != nil {
 		return CollectionRun{}, err
 	}
-	from, to := now.AddDate(0, 0, -1), now.AddDate(0, 0, 7)
+	from, to := sportCollectionWindow(now)
 	total := 0
 	for _, code := range competitionCodes {
 		season, matches, fetchErr := s.connector.FetchMatches(ctx, code, from, to)
@@ -66,6 +66,10 @@ func (s *Service) Sync(ctx context.Context, now time.Time) (CollectionRun, error
 	}
 	run.Status, run.RecordsCount = "succeeded", total
 	return run, nil
+}
+
+func sportCollectionWindow(now time.Time) (time.Time, time.Time) {
+	return now.AddDate(0, 0, -1), now.AddDate(0, 0, 30)
 }
 func (s *Service) fail(ctx context.Context, id uuid.UUID, count int, cause error) error {
 	_ = s.repo.FinishCollection(ctx, id, "failed", count, "Provider synchronization failed; consult structured server logs.")
