@@ -17,20 +17,14 @@ const favorites = useFavoritesStore()
 const loadedMatches = ref<FootballMatch[]>([])
 const broadcasts = ref<BroadcastListing[]>([])
 const news = ref<NewsItem[]>([])
-const horizonDays = ref<14 | 30>(14)
 const selectedClubId = ref<string | null>(null)
 const visibleMatchCount = ref(8)
 const matchBatchSize = 8
 const channelsByMatch = computed(() => broadcastChannelsByMatch(broadcasts.value))
-const matchesInHorizon = computed(() =>
-  favoriteMatchesWithin(loadedMatches.value, new Date(), horizonDays.value),
-)
+const matchesInHorizon = computed(() => favoriteMatchesWithin(loadedMatches.value, new Date(), 30))
 const filteredMatches = computed(() => matchesForClub(matchesInHorizon.value, selectedClubId.value))
 const favoriteMatches = computed(() => filteredMatches.value.slice(0, visibleMatchCount.value))
 const hasMoreMatches = computed(() => visibleMatchCount.value < filteredMatches.value.length)
-const matchHeading = computed(() =>
-  horizonDays.value === 14 ? 'The next two weeks' : 'The month ahead',
-)
 const todayLabel = computed(() =>
   new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(
     new Date(),
@@ -49,7 +43,7 @@ onMounted(async () => {
   broadcasts.value = broadcastResponse.listings
   news.value = newsResponse.news
 })
-watch([horizonDays, selectedClubId], () => (visibleMatchCount.value = matchBatchSize))
+watch(selectedClubId, () => (visibleMatchCount.value = matchBatchSize))
 </script>
 
 <template>
@@ -83,29 +77,9 @@ watch([horizonDays, selectedClubId], () => (visibleMatchCount.value = matchBatch
       <div class="section-heading">
         <div>
           <p class="eyebrow">Next for your clubs</p>
-          <h2>{{ matchHeading }}</h2>
+          <h2>The month ahead</h2>
         </div>
-        <div class="dashboard-match-tools">
-          <div class="match-horizon" role="group" aria-label="Favorite match horizon">
-            <button
-              type="button"
-              :class="{ active: horizonDays === 14 }"
-              :aria-pressed="horizonDays === 14"
-              @click="horizonDays = 14"
-            >
-              2 weeks
-            </button>
-            <button
-              type="button"
-              :class="{ active: horizonDays === 30 }"
-              :aria-pressed="horizonDays === 30"
-              @click="horizonDays = 30"
-            >
-              1 month
-            </button>
-          </div>
-          <RouterLink to="/matches" class="text-link">All matches</RouterLink>
-        </div>
+        <RouterLink to="/matches" class="text-link">All matches</RouterLink>
       </div>
       <div class="favorite-club-filters" role="group" aria-label="Filter matches by favorite club">
         <button
@@ -135,6 +109,7 @@ watch([horizonDays, selectedClubId], () => (visibleMatchCount.value = matchBatch
           :match="match"
           :channels="channelsByMatch.get(match.id)"
           show-channel-status
+          show-date
         />
       </div>
       <p v-else class="quiet dashboard-empty-line">

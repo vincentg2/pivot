@@ -808,31 +808,6 @@ small {
 .compact-matches {
   border-top: 1px solid var(--ink);
 }
-.dashboard-match-tools {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-.match-horizon {
-  display: inline-flex;
-  padding: 3px;
-  border: 1px solid var(--line);
-  border-radius: 99px;
-}
-.match-horizon button {
-  min-height: 32px;
-  padding: 0.3rem 0.65rem;
-  border: 0;
-  border-radius: 99px;
-  background: transparent;
-  color: var(--muted);
-  font-size: 0.72rem;
-  cursor: pointer;
-}
-.match-horizon button.active {
-  background: var(--ink);
-  color: var(--paper);
-}
 .favorite-club-filters {
   display: flex;
   padding: 0 0 0.85rem;
@@ -1558,13 +1533,9 @@ small {
   .home-label {
     display: none;
   }
-  .dashboard-matches .section-heading,
-  .dashboard-match-tools {
+  .dashboard-matches .section-heading {
     align-items: flex-start;
     flex-direction: column;
-  }
-  .dashboard-match-tools {
-    gap: 0.45rem;
   }
   .match-filters {
     align-items: stretch;

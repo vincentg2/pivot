@@ -29,4 +29,9 @@ describe('MatchRow TV status', () => {
       'TV channel not announced yet',
     )
   })
+
+  it('shows a compact date when requested by the dashboard', () => {
+    const wrapper = mount(MatchRow, { props: { match, showDate: true } })
+    expect(wrapper.get('time').text()).toContain('28 Aug')
+  })
 })

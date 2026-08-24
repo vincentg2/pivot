@@ -7,6 +7,7 @@ const props = defineProps<{
   match: FootballMatch
   channels?: string[]
   showChannelStatus?: boolean
+  showDate?: boolean
 }>()
 const finished = computed(() => props.match.status === 'FINISHED')
 const upcoming = computed(() => ['SCHEDULED', 'TIMED'].includes(props.match.status))
@@ -21,13 +22,23 @@ const status = computed(() => {
   if (props.match.status === 'POSTPONED') return 'Postponed'
   return time.value
 })
+const dateLabel = computed(() =>
+  new Intl.DateTimeFormat('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  }).format(new Date(props.match.utcDate)),
+)
+const scheduleLabel = computed(() =>
+  props.showDate ? `${dateLabel.value} · ${status.value}` : status.value,
+)
 </script>
 
 <template>
   <article class="match-row" :class="{ featured: match.favorite }">
     <div class="match-meta">
       <span>{{ match.competition.code }}</span
-      ><time :datetime="match.utcDate">{{ status }}</time>
+      ><time :datetime="match.utcDate">{{ scheduleLabel }}</time>
     </div>
     <div class="match-team home-team">
       <span>{{ match.home.shortName || match.home.name }}</span>
